@@ -1,0 +1,28 @@
+# Binary files (The compiled app)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+__debug_bin
+bin/
+
+# Environment variables (CRITICAL: Never leak your DB passwords/secrets)
+.env
+*.env
+auth.yaml
+config.yaml
+
+# IDEs (Editor specific settings)
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Go specific
+# We ignore vendor/ because Go downloads dependencies into a global cache
+vendor/
