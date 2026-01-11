@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	//"github.com/thuanvu301103/auth-service/internal/auth"
 	"github.com/thuanvu301103/auth-service/internal/config"
-	//"github.com/thuanvu301103/auth-service/internal/database"
+	"github.com/thuanvu301103/auth-service/internal/database"
 )
 
 func main() {
@@ -17,10 +17,12 @@ func main() {
 	}
 
 	// 2. CONNECT TO DATABASE (GORM)
-	/*db, err := database.InitMySQL(cfg.DbURL)
+	db, err := database.InitPostgres(cfg.DbURL)
 	if err != nil {
 		log.Fatalf("Could not connect to database: %v", err)
-	}*/
+	}
+
+	_ = db
 
 	// 3. INITIALIZE LAYERS (Dependency Injection)
 	// Repository -> Service -> Controller
