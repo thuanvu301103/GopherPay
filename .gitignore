@@ -28,4 +28,4 @@ Thumbs.db
 vendor/
 
 # Ignore all Atlas / Goose migrations
-internal/database/migration/**
+migration/**
