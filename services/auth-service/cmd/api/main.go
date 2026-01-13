@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	//"github.com/thuanvu301103/auth-service/internal/auth"
+	"github.com/thuanvu301103/auth-service/internal/auth"
 	"github.com/thuanvu301103/auth-service/internal/config"
 	"github.com/thuanvu301103/auth-service/internal/database"
 )
@@ -22,7 +22,20 @@ func main() {
 		log.Fatalf("Could not connect to database: %v", err)
 	}
 
-	_ = db
+	// 3. AUTO MIGRATE
+	if cfg.DbMigrate {
+		log.Println("Option DB_AUTO_MIGRATE is ON. Starting migration...")
+		err := db.AutoMigrate(
+			&auth.User{},
+		)
+
+		if err != nil {
+			log.Fatalf("Migration failed: %v", err)
+		}
+		log.Println("Database migration completed!")
+	} else {
+		log.Println("Option DB_AUTO_MIGRATE is OFF. Skipping migration.")
+	}
 
 	// 3. INITIALIZE LAYERS (Dependency Injection)
 	// Repository -> Service -> Controller

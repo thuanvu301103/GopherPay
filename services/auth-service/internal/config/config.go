@@ -5,6 +5,7 @@ import "github.com/spf13/viper"
 type Config struct {
 	Port      string `mapstructure:"PORT"`
 	DbURL     string `mapstructure:"DB_URL"`
+	DbMigrate bool   `mapstructure:"DB_AUTO_MIGRATE"`
 	JwtSecret string `mapstructure:"JWT_SECRET"`
 }
 
