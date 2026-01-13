@@ -27,5 +27,6 @@ Thumbs.db
 # We ignore vendor/ because Go downloads dependencies into a global cache
 vendor/
 
-# Ignore all migrations in all services
-**/internal/database/migration/**
+# Ignore all Atlas / Goose migrations in all services
+**/migration/**
+!**/migration/.gitkeep
