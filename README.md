@@ -11,7 +11,7 @@ Instead of one big application, we will split the logic into three core services
 
 #### Service A: Identity & Auth
 - Focus: Security and Middleware.
-- Key Tasks: * Implement POST /register and POST /login.
+- Key Tasks: Implement POST /register and POST /login.
 - Use Bcrypt for password hashing.
 - Generate JWT (JSON Web Tokens) for authenticated requests.
 
@@ -29,6 +29,7 @@ Instead of one big application, we will split the logic into three core services
 ## Migration
 
 ### Using Atlas
+- Change the `DB_AUTO_MIGRATE` in `.env` to `true`
 - Create migration file: 
 ```bash
 atlas migrate diff <file_name> --env gorm
@@ -37,3 +38,8 @@ atlas migrate diff <file_name> --env gorm
 ```bash
 atlas migrate apply --env gorm --url "postgres://user:pass@localhost:5432/dbname?sslmode=disable"
 ```
+
+### Using AutoMigration
+- Change the `DB_AUTO_MIGRATE` in `.env` to `false`
+- Run the server
+
