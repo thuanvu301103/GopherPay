@@ -7,7 +7,23 @@ import (
 	"github.com/thuanvu301103/auth-service/internal/auth"
 	"github.com/thuanvu301103/auth-service/internal/config"
 	"github.com/thuanvu301103/auth-service/internal/database"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "github.com/thuanvu301103/auth-service/docs"
 )
+
+// @title           Gopher Swagger Example API
+// @version         1.0
+// @description     This is a sample server for Auth Service.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  vungocthuan1234@gmail.com
+
+// @host      localhost:3000
+// @BasePath  /
 
 func main() {
 	// 1. LOAD CONFIGURATION (Viper)
@@ -37,24 +53,12 @@ func main() {
 		log.Println("Option DB_AUTO_MIGRATE is OFF. Skipping migration.")
 	}
 
-	// 3. INITIALIZE LAYERS (Dependency Injection)
-	// Repository -> Service -> Controller
-	/*authRepo := auth.NewRepository(db)
-	authService := auth.NewService(authRepo, cfg.JwtSecret)
-	authController := auth.NewController(authService)*/
-
 	// 4. SETUP GIN ROUTER
 	r := gin.Default()
 
-	// 5. DEFINE ROUTES
-	/*api := r.Group("/api/v1")
-	{
-		authRoutes := api.Group("/auth")
-		{
-			authRoutes.POST("/register", authController.Register)
-			authRoutes.POST("/login", authController.Login)
-		}
-	}*/
+	// 5. MAP ROUTER
+	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	auth.MapRoutes(r, db)
 
 	// 6. START SERVER
 	log.Printf("Server starting on port %s", cfg.Port)

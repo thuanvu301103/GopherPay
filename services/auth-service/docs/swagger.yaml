@@ -1,0 +1,89 @@
+basePath: /
+definitions:
+  auth.AuthResponse:
+    properties:
+      accessToken:
+        type: string
+      tokenType:
+        type: string
+      user:
+        $ref: '#/definitions/auth.User'
+    type: object
+  auth.RegisterRequest:
+    properties:
+      confirmPassword:
+        description: Re-enter password - Must equal password
+        example: "123456789"
+        type: string
+      email:
+        description: User's email
+        example: john@gopher.com
+        type: string
+      fullName:
+        description: User's full name
+        example: John Doe
+        type: string
+      password:
+        description: User's password
+        example: "123456789"
+        minLength: 8
+        type: string
+    required:
+    - confirmPassword
+    - email
+    - fullName
+    - password
+    type: object
+  auth.User:
+    properties:
+      createdAt:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: vungocthuan1234@gmail.com
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server for Auth Service.
+  termsOfService: http://swagger.io/terms/
+  title: Gopher Swagger Example API
+  version: "1.0"
+paths:
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with email and password
+      parameters:
+      - description: User Registration Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auth.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User Registration
+      tags:
+      - Authentication
+swagger: "2.0"

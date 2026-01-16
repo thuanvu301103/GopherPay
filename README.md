@@ -11,22 +11,33 @@ Instead of one big application, we will split the logic into three core services
 
 #### Service A: Identity & Auth
 - Focus: Security and Middleware.
-- Key Tasks: Implement POST /register and POST /login.
+- Key Tasks: 
+    - `POST /auth/register` 
+    - `POST /auth/login`.
 - Use Bcrypt for password hashing.
 - Generate JWT (JSON Web Tokens) for authenticated requests.
 
 #### Service B: Account Management
 - Focus: CRUD operations and Database design.
 - Key Tasks:
-    - GET /accounts/me: Fetch current balance.
-    - POST /accounts: Create a new currency wallet (e.g., USD, VND).
+    - `GET /accounts/me`: Fetch current balance.
+    - `POST /accounts`: Create a new currency wallet (e.g., USD, VND).
 
 #### Service C: Transaction Engine (The Core)
 - Focus: Concurrency and Atomicity.
-- Key Tasks: POST /transfer: Transfer money between users.
+- Key Tasks: `POST /transfer`: Transfer money between users.
 - Crucial Concept: Using Database Transactions to ensure that if the sender's deduction fails, the receiver's credit never happens.
 
-## Migration
+## API Contract Document
+
+- Update document:
+```Bash
+swag init -g cmd/api/main.go
+```
+
+- Endpoint: `http://localhost:3000/docs/index.html`
+
+## Database Migration
 
 ### Using Atlas
 - Change the `DB_AUTO_MIGRATE` in `.env` to `true`

@@ -18,11 +18,16 @@ type User struct {
 }
 
 // Dtos
+
 type RegisterRequest struct {
-	Email           string `json:"email" binding:"required,email"`
-	Password        string `json:"password" binding:"required,min=8"`
-	ConfirmPassword string `json:"confirmPassword" binding:"required,eqfield=Password"`
-	FullName        string `json:"fullName" binding:"required"`
+	// User's email
+	Email string `json:"email" example:"john@gopher.com" binding:"required,email"`
+	// User's password
+	Password string `json:"password" example:"123456789" binding:"required,min=8"`
+	// Re-enter password - Must equal password
+	ConfirmPassword string `json:"confirmPassword" example:"123456789" binding:"required,eqfield=Password"`
+	// User's full name
+	FullName string `json:"fullName" example:"John Doe" binding:"required"`
 }
 
 type LoginRequest struct {

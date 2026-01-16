@@ -16,6 +16,16 @@ func NewController(svc Service) *Controller {
 
 // Detailed methods
 
+// Register godoc
+// @Summary      User Registration
+// @Description  Register a new user with email and password
+// @Tags         Authentication
+// @Accept       json
+// @Produce      json
+// @Param        user  body      auth.RegisterRequest  true  "User Registration Data"
+// @Success      201   {object}  auth.AuthResponse
+// @Failure      400   {object}  map[string]string
+// @Router       /auth/register [post]
 func (ctrl *Controller) Register(c *gin.Context) {
 	var req RegisterRequest
 
