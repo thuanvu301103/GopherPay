@@ -19,7 +19,7 @@ func NewController(svc Service) *Controller {
 // Register godoc
 // @Summary      User Registration
 // @Description  Register a new user with email and password
-// @Tags         auth
+// @Tags         Authentication
 // @Accept       json
 // @Produce      json
 // @Param        user  body      auth.RegisterRequest  true  "User Registration Data"

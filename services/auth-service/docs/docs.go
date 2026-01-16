@@ -30,7 +30,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Authentication"
                 ],
                 "summary": "User Registration",
                 "parameters": [
@@ -89,17 +89,25 @@ const docTemplate = `{
             ],
             "properties": {
                 "confirmPassword": {
-                    "type": "string"
+                    "description": "Re-enter password - Must equal password",
+                    "type": "string",
+                    "example": "123456789"
                 },
                 "email": {
-                    "type": "string"
+                    "description": "User's email",
+                    "type": "string",
+                    "example": "john@gopher.com"
                 },
                 "fullName": {
-                    "type": "string"
+                    "description": "User's full name",
+                    "type": "string",
+                    "example": "John Doe"
                 },
                 "password": {
+                    "description": "User's password",
                     "type": "string",
-                    "minLength": 8
+                    "minLength": 8,
+                    "example": "123456789"
                 }
             }
         },

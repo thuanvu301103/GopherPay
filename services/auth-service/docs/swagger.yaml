@@ -12,12 +12,20 @@ definitions:
   auth.RegisterRequest:
     properties:
       confirmPassword:
+        description: Re-enter password - Must equal password
+        example: "123456789"
         type: string
       email:
+        description: User's email
+        example: john@gopher.com
         type: string
       fullName:
+        description: User's full name
+        example: John Doe
         type: string
       password:
+        description: User's password
+        example: "123456789"
         minLength: 8
         type: string
     required:
@@ -77,5 +85,5 @@ paths:
             type: object
       summary: User Registration
       tags:
-      - auth
+      - Authentication
 swagger: "2.0"
