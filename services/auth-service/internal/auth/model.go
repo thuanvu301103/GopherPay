@@ -9,9 +9,10 @@ import (
 // Data Entitíe
 type User struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
-	Email     string         `gorm:"unique;not null" json:"email"`
+	Email     string         `gorm:"uniqueIndex;not null;size:255" json:"email"`
 	Password  string         `gorm:"not null" json:"-"`
 	FullName  string         `gorm:"size:100" json:"fullName"`
+	IsActive  bool           `gorm:"index;default:false" json:"isActive"`
 	CreatedAt time.Time      `json:"createdAt"`
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
@@ -28,6 +29,13 @@ type RegisterRequest struct {
 	ConfirmPassword string `json:"confirmPassword" example:"123456789" binding:"required,eqfield=Password"`
 	// User's full name
 	FullName string `json:"fullName" example:"John Doe" binding:"required"`
+}
+
+type RegisterResponse struct {
+	// Successfully registered message
+	Message string `json:"message" example:"Registration successful. Please check your email" binding:"required"`
+	// User's information
+	User User `json:"user" binding:"required"`
 }
 
 type LoginRequest struct {

@@ -23,7 +23,7 @@ func NewController(svc Service) *Controller {
 // @Accept       json
 // @Produce      json
 // @Param        user  body      auth.RegisterRequest  true  "User Registration Data"
-// @Success      201   {object}  auth.AuthResponse
+// @Success      201   {object}  auth.RegisterResponse
 // @Failure      400   {object}  map[string]string
 // @Router       /auth/register [post]
 func (ctrl *Controller) Register(c *gin.Context) {

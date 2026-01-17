@@ -23,7 +23,7 @@ import (
 // @contact.email  vungocthuan1234@gmail.com
 
 // @host      localhost:3000
-// @BasePath  /
+// @BasePath  /api/v1/
 
 func main() {
 	// 1. LOAD CONFIGURATION (Viper)
