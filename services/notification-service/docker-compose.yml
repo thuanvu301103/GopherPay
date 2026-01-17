@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Main Database for templates and configuration
+  mongodb:
+    image: mongo:4.4.6
+    restart: always
+    volumes:
+      - mongodb_data:/data/db
+
+  # Message queue for handling asynchronous notification jobs
+  redis:
+    image: redis:alpine
+    restart: always
+
+  # Backend API: The core logic of Novu
+  api:
+    image: ghcr.io/novuhq/novu/api:latest
+    restart: always
+    env_file: .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+      - redis
+
+  # Worker: The engine that actually sends the emails/SMS
+  worker:
+    image: ghcr.io/novuhq/novu/worker:latest
+    restart: always
+    env_file: .env
+    depends_on:
+      - api
+      - mongodb
+      - redis
+
+  # Dashboard: The UI to design your email templates
+  web:
+    image: ghcr.io/novuhq/novu/web:latest
+    restart: always
+    env_file: .env
+    ports:
+      - "4200:4200"
+    depends_on:
+      - api
+
+volumes:
+  mongodb_data:
