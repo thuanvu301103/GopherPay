@@ -31,3 +31,15 @@ Utility/Support Service:
 - Key Tasks: `POST /transfer`: Transfer money between users.
 - Crucial Concept: Using Database Transactions to ensure that if the sender's deduction fails, the receiver's credit never happens.
 
+## Security
+The most secure way is to use the openssl tool, which is pre-installed on Linux, macOS, and Git Bash for Windows.
+
+- For `JWT_SECRET`: Run this to get a long random string:
+```Bash
+openssl rand -base64 32
+```
+
+- For `STORE_ENCRYPTION_KEY`: Run this to get exactly 32 hex characters:
+```Bash
+openssl rand -hex 16
+```
