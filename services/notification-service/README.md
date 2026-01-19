@@ -72,6 +72,8 @@ The recipient of the notification. Every subscriber has a unique subscriberId (u
         - In-App: Novu's internal WebSocket-based notification center.
 
 ### Workflow/Template
+- A Workflow is the "Master Blueprint" of a notification. It defines what to send, how to send it, and when it should be delivered.
+- A Workflow in Novu is made up of steps, and each step defines a specific action in the notification process. Steps run in the order you arrange them, and they control how and when the subscriber receives a notification.
 
 ### Message/Activity
 
@@ -118,3 +120,14 @@ The recipient of the notification. Every subscriber has a unique subscriberId (u
   "check": false
 }
 ```
+*Caution*: `check` (Optional): If set to true, Novu will attempt to verify the connection during creation. It is recommended to keep it false if you just want to save the settings first. 
+
+### Create Notification Workflow (Verification Email Workflow)
+1. Define Workflow steps (only 1 step):
+    - `type`: Defines the communication channel. In this case, `"email"`. Novu will automatically route this to your active Email Integration (Gmail).
+    - `template`: Contains the actual message details:
+        - `subject`: The email's subject line. Supports variables like `{{otpCode}}`.
+        - `content`: The body of the email (HTML supported). Variables used here must match the data sent from your Go backend.
+        - `layoutIdentifier`: Points to a specific email layout (header/footer). `"default"` uses Novu's standard system layout.
+
+### Trigger the Notification (Trigger the Workflow)
