@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// Data Entitíe
+// Data Entities
 type User struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
 	Email     string         `gorm:"unique;not null" json:"email"`

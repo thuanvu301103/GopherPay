@@ -45,6 +45,16 @@ The recipient of the notification. Every subscriber has a unique subscriberId (u
 - Represents the top-level workspace that contains all your projects, environments, workflows, integration and settings
 - The user who creates the organization will become its admin (automatically create a member relation with role `"admin"`)
 
+### Environment 
+- Represents an isolated workspace within an organization used to separate different stages of your notification system. Each environment has its own API keys, workflows, subscribers, templates, and settings. This allows you to safely test changes without affecting production.
+- Common environments include:
+    - Development – for local testing and experimentation
+    - Staging – for pre‑production validation
+    - Production – for live notification delivery
+- Two default Environment entities are created when an Organization is created:
+    - `Development` for local testing and experimentation
+    - `Production` for live notification delivery
+
 ### Integration
 - The "delivery arm" of the system. While the Workflow contains the logic (what to send and when), the Integration connects Novu to the actual service provider that delivers the message to the user.
 
@@ -78,4 +88,33 @@ The recipient of the notification. Every subscriber has a unique subscriberId (u
 4. Create an Organization: `POST /v1/organizations`
 5. A member relation between the User and the Organization is created automatically with role `"admin"`
 
-### Configure the Email Integration
+### Configure the Email Integration (GMail SMTP)
+1. Connection Settings:
+    - Host: `smtp.gmail.com`
+    - Port: `465` (SSL) or `587` (TLS)
+    - User/From: your full Gmail address (e.g., example@gmail.com)
+2. Password (Google App Password): Since 2022, Google requires a 16-character unique code for third-party apps like Novu.
+    1. Enable 2-Step Verification: Go to your [Google Security](https://myaccount.google.com/security) Settings and ensure 2FA is active.
+    2. Generate App Password:
+        - Search for "App Passwords" in the top search bar of your Google Account.
+        - Alternatively, go to `Security > 2-Step Verification` scroll to the bottom to find App Passwords.
+        - Create: Enter an app name (e.g., "Novu-Notification-Service") and click Create.
+        - Copy: A 16-character code will appear . Save this code—it is the value you use for the "password" field in your Novu integration.
+3. Create integration with body: `POST /v1/integrations`
+```JSON
+{
+  "providerId": "nodemailer",
+  "channel": "email",
+  "_environmentId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx",
+  "credentials": {
+    "host": "smtp.gmail.com",
+    "port": "465",
+    "secure": true,
+    "user": "admin@yourdomain.com",
+    "password": "xxxx-xxxx-xxxx-xxxx",
+    "from": "admin@yourdomain.com"
+  },
+  "active": true,
+  "check": false
+}
+```
