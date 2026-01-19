@@ -1,0 +1,22 @@
+{
+	"id": "a6270761-f762-4933-afea-b47c4e4e0aee",
+	"name": "Gopher",
+	"values": [
+		{
+			"key": "baseUrl",
+			"value": "",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "apiKey",
+			"value": "",
+			"type": "default",
+			"enabled": true
+		}
+	],
+	"color": null,
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2026-01-19T07:16:11.394Z",
+	"_postman_exported_using": "Postman/11.81.0"
+}

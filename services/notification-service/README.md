@@ -19,6 +19,7 @@ docker-compose up -d
 ### The API Endpoints (For your Identity Service)
 - Your Identity Service (Go) will communicate with Novu via the api service at `http://localhost:3004`.
 - The most important endpoint you will use is the Trigger endpoint:
+
 | Method | Endpoint | Description | 
 | --- | --- | --- |
 | POST | `/v1/events/trigger` | Used by your Identity Service to send a notification | 
@@ -41,20 +42,40 @@ An internal entity that manages or interacts with the Novu platform, such as dev
 The recipient of the notification. Every subscriber has a unique subscriberId (usually matching your database user ID). They store contact metadata like email, phone number, and device tokens for push notifications
 
 ### Organization
-- Represents the top-level workspace that contains all your projects, environments, workflows, and settings
+- Represents the top-level workspace that contains all your projects, environments, workflows, integration and settings
 - The user who creates the organization will become its admin (automatically create a member relation with role `"admin"`)
 
-## Main Workflows
-- *Known Issue*: The latest Novu Docker image is currently affected by a critical bug. Detailed technical information and tracking can be found in [Github Issue](https://github.com/novuhq/novu/issues/9569). Due to this issue, I suggest using API calling instead of UI
-- *Custom API Document*: Describe in `docs` folder 
-- *Caution*: These workflows are used for *email verification* feature only
-- *Base URL*: `http://localhost:3004`
+### Integration
+- The "delivery arm" of the system. While the Workflow contains the logic (what to send and when), the Integration connects Novu to the actual service provider that delivers the message to the user.
 
-### Initial
+- Novu does not send emails, SMS, or Push notifications itself; it orchestrates external providers to do the work.
+    1. Key Responsibilities
+        - Connectivity: It stores the credentials (API Keys, Secret Tokens, SMTP settings) required to talk to providers like SendGrid, Twilio, or AWS SES.
+        - Abstraction: It allows you to switch providers without changing your Go code. If you switch from SendGrid to Postmark, you only update the Integration entity in Novu.
+        - Failover: You can have multiple integrations for the same channel to ensure high availability.
+
+    2. Supported Channels
+        - Email: SendGrid, Mailgun, Postmark, AWS SES, SMTP.
+        - SMS: Twilio, Plivo, MessageBird.
+        - Push: Firebase (FCM), APNS (Apple).
+        - Chat: Slack, Discord, MS Teams.
+        - In-App: Novu's internal WebSocket-based notification center.
+
+### Workflow/Template
+
+### Message/Activity
+
+## Main Workflows
+- *Known Issue*: The latest Novu Docker image is currently affected by a critical bug. Detailed technical information and tracking can be found in [Github Issue](https://github.com/novuhq/novu/issues/9569). Due to this issue, I suggest using API calling instead of UI.
+- *Custom API Document*: Describe in `docs` folder. Import to Postman to use.
+- *Caution*: These workflows are used for *email verification* feature only.
+- *Base URL*: `http://localhost:3004`.
+
+### Initial Root Admin & Organization
 1. Register a new User (admin/developer): `POST /v1/auth/register`
 2. Login: `POST /v1/auth/login`
 3. Copy the returned token
 4. Create an Organization: `POST /v1/organizations`
 5. A member relation between the User and the Organization is created automatically with role `"admin"`
 
-### 
+### Configure the Email Integration
