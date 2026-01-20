@@ -71,7 +71,7 @@ The recipient of the notification. Every subscriber has a unique subscriberId (u
         - Chat: Slack, Discord, MS Teams.
         - In-App: Novu's internal WebSocket-based notification center.
 
-### Workflow/Template
+### Workflow/Notification Template
 - A Workflow is the "Master Blueprint" of a notification. It defines what to send, how to send it, and when it should be delivered.
 - A Workflow in Novu is made up of steps, and each step defines a specific action in the notification process. Steps run in the order you arrange them, and they control how and when the subscriber receives a notification.
 
@@ -89,6 +89,7 @@ The recipient of the notification. Every subscriber has a unique subscriberId (u
 3. Copy the returned token
 4. Create an Organization: `POST /v1/organizations`
 5. A member relation between the User and the Organization is created automatically with role `"admin"`
+6. Make sure that at least one Environement belongs to user's Organization. Else, create a default Environtment `POST /v1/environments`
 
 ### Configure the Email Integration (GMail SMTP)
 1. Connection Settings:
@@ -126,8 +127,27 @@ The recipient of the notification. Every subscriber has a unique subscriberId (u
 1. Define Workflow steps (only 1 step):
     - `type`: Defines the communication channel. In this case, `"email"`. Novu will automatically route this to your active Email Integration (Gmail).
     - `template`: Contains the actual message details:
-        - `subject`: The email's subject line. Supports variables like `{{otpCode}}`.
+        - `name`: The indentifier of the step
+        - `subject`: The email's subject line. Supports variables like `{{variable}}` (e.g. `"Mã xác nhận của bạn là {{otpCode}}"`).
         - `content`: The body of the email (HTML supported). Variables used here must match the data sent from your Go backend.
         - `layoutIdentifier`: Points to a specific email layout (header/footer). `"default"` uses Novu's standard system layout.
+2. Add a header's key `Novu-Environment-Id` using an Environment that belong to the User's Organization (This solve the Critical Bug - Issue of the UI)
+3. Create workflow: `POST /v2/workflows`
+
+*Caution*: When passing variables in the email body or subject, you must include the correct namespace. Variables from the trigger call should be prefixed with payload (e.g., `{{payload.variableName}}`), while subscriber data must use the subscriber prefix (e.g., `{{subscriber.firstName}}`). Using naked variables like `{{variableName}}` will result in a validation error.
+```HTML
+<div style=\"font-family: Arial; padding: 20px;\">
+    <h2>Verify Email</h2>
+    <p>Hi {{payload.firstName}},</p>
+    <a href=\"{{payload.verificationLink}}\" 
+        style=\"background: #4F46E5; 
+        color: white; 
+        padding: 12px 20px; 
+        text-decoration: none; 
+        border-radius: 5px;\">
+        Verify Now
+    </a>
+</div>"
+```
 
 ### Trigger the Notification (Trigger the Workflow)
