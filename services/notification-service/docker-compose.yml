@@ -23,7 +23,7 @@ services:
 
   # Backend API: The core logic of Novu
   api:
-    image: ghcr.io/novuhq/novu/api:lastest
+    image: ghcr.io/novuhq/novu/api:latest
     restart: always
     environment:
       - REDIS_HOST=redis
