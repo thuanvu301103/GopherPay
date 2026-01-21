@@ -121,7 +121,8 @@ Message is a single notification that is sent to a subscriber. Each channel step
     "secure": true,
     "user": "admin@yourdomain.com",
     "password": "xxxx-xxxx-xxxx-xxxx",
-    "from": "admin@yourdomain.com"
+    "from": "admin@yourdomain.com",
+    "user": "admin@yourdomain.com"
   },
   "active": true,
   "check": false
@@ -200,3 +201,6 @@ This workflow is usually peform by a third-party (Auth Service)
 8. Email Dispatch (Integration Layer): The Worker now acts as a client to your Email Provider:
     1. Provider Handshake: The Worker looks for an Active Integration (e.g., Gmail SMTP). It establishes a connection using the credentials you provided (Host, Port, App Password).
     2. SMTP Transmission: The Worker sends the rendered email to the SMTP server.Final Update: Once the SMTP server accepts the mail, the Worker updates the Message status to sent and completes the job.
+
+### System Delivery Diagnostics
+1. Get message detail of a transaction `GET /v1/messages?transactionId={transactionId}`
