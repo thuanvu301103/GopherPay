@@ -2,7 +2,8 @@
 
 ## Run Service using Docker
 ```Bash
-docker-compose up -d
+docker compose down
+docker compose up -d --pull always
 ```
 
 ## Important Endpoints
@@ -75,7 +76,11 @@ The recipient of the notification. Every subscriber has a unique subscriberId (u
 - A Workflow is the "Master Blueprint" of a notification. It defines what to send, how to send it, and when it should be delivered.
 - A Workflow in Novu is made up of steps, and each step defines a specific action in the notification process. Steps run in the order you arrange them, and they control how and when the subscriber receives a notification.
 
-### Message/Activity
+### Notification
+Represent the complete journey of a message triggered by an event. They encapsulate all the execution logic and delivery metadata in a single traceable unit
+
+### Message
+Message is a single notification that is sent to a subscriber. Each channel step in the workflow generates one or more message(s)
 
 ## Main Workflows
 - *Known Issue*: The latest Novu Docker image is currently affected by a critical bug. Detailed technical information and tracking can be found in [Github Issue](https://github.com/novuhq/novu/issues/9569). Due to this issue, I suggest using API calling instead of UI.
@@ -108,6 +113,7 @@ The recipient of the notification. Every subscriber has a unique subscriberId (u
 {
   "providerId": "nodemailer",
   "channel": "email",
+  "type": "email",
   "_environmentId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx",
   "credentials": {
     "host": "smtp.gmail.com",
@@ -121,7 +127,9 @@ The recipient of the notification. Every subscriber has a unique subscriberId (u
   "check": false
 }
 ```
-*Caution*: `check` (Optional): If set to true, Novu will attempt to verify the connection during creation. It is recommended to keep it false if you just want to save the settings first. 
+*Caution*: 
+    - `check` (Optional): If set to true, Novu will attempt to verify the connection during creation. It is recommended to keep it false if you just want to save the settings first.
+    - Make sure that `type` is `"email"` 
 
 ### Create Notification Workflow (Verification Email Workflow)
 1. Define Workflow steps (only 1 step):
@@ -151,3 +159,44 @@ The recipient of the notification. Every subscriber has a unique subscriberId (u
 ```
 
 ### Trigger the Notification (Trigger the Workflow)
+This workflow is usually peform by a third-party (Auth Service)
+1. Define Subcriber (Email receiver)'s infomation
+```JSON
+{
+    "subscriberId": "123456789",    // Usually user's id stored in third-party's database
+    "email": "receiver@gmail.com",
+    "firstName": "Thuận"
+}
+```
+2. Define Email's payload
+```JSON
+{
+    "verificationLink": "https://your-app.com/verify?token=secret-token-123"
+}
+```
+3. Add a header's key `Novu-Environment-Id` using an Environment that belong to the User's Organization
+4. Trigger event: `POST /v1/events/trigger`
+```JSON
+{
+    "name": "email-verification",    // Must match workflow_indentifier 
+    "to": {subcriber},
+    "payload": {payload}
+}
+```
+5. Automatic Subscriber Upsert: Novu follows a "Just-in-Time" provisioning logic. If the subscriberId ("123456789") does not exist in the Novu database, Novu will:
+    1. Create a new subscriber record automatically
+    2. Store the email and firstName provided in the to object
+    3. Proceed to the next step
+    
+6. Worker Pickup & Template Rendering: Once the job is added to the Redis Queue, the Novu Worker takes over the execution:
+    1. Job Acquisition: The Worker service monitors the "standard" queue. It picks up the job created in Step 4 and changes its  tatus from queued to processing.
+    2. Logic Execution: The Worker fetches the Workflow definition from the database. It identifies the step `type` (e.g., email) and verifies if any filters or delays need to be applied.
+    3. Variable Injection: The Worker retrieves your HTML template and uses a rendering engine (Handlebars) to replace the placeholders with your actual payload data
+    
+7. Notification & Message Entity Creation: Before sending the actual email, the Worker performs a "Write" operation to the database:
+    1. Notification Record: It creates a Notification entity (the one you found in MongoDB) which acts as the "Parent" record for this specific trigger.
+    2. Message Record: It creates a Message entity for the specific channel (Email). This record stores the final rendered HTML and is used to track whether the email is sent, delivered, or failed.
+    
+8. Email Dispatch (Integration Layer): The Worker now acts as a client to your Email Provider:
+    1. Provider Handshake: The Worker looks for an Active Integration (e.g., Gmail SMTP). It establishes a connection using the credentials you provided (Host, Port, App Password).
+    2. SMTP Transmission: The Worker sends the rendered email to the SMTP server.Final Update: Once the SMTP server accepts the mail, the Worker updates the Message status to sent and completes the job.
