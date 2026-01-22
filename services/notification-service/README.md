@@ -128,7 +128,55 @@ Message is a single notification that is sent to a subscriber. Each channel step
   "check": false
 }
 ```
-*Caution*: 
+4. API Service creates an NotoficationTemplate Entity:
+```JSON
+{
+  "_id": {
+    "$oid": "6971ab0493e98bfba5435ba9"
+  },
+  "name": "Email Verification",
+  "description": "Email Verification",
+  "active": true,
+  "type": "workflow",
+  "steps": [
+    {
+      "active": true,
+      "replyCallback": {},
+      "shouldStopOnFail": false,
+      "issues": {},
+      "stepId": "send-email",
+      "name": "Send email",
+      "type": "REGULAR",
+      "filters": [],
+      "_templateId": {
+        "$oid": "6971ab0493e98bfba5435ba5"  // Id of related MessageTemplate
+      },
+      "_id": {
+        "$oid": "6971ab0493e98bfba5435ba5"
+      },
+      "variants": []
+    }
+  ]
+}
+```
+5. API Service creates MessageTemplate related to the steps in Workflow. Make sure the `subject` - `content` field is defined properly, `contentType` must be `"html"`
+```JSON
+{
+  "_id": {
+    "$oid": "6971ab0493e98bfba5435ba5"
+  },
+  "type": "email",
+  "active": true,
+  "name": "Send email",
+  "subject": "Confirm Email",
+  "contentType": "html",
+  "content": "Hi {{subscriber.firstName}}, click here: {{verificationLink}}"
+  "_layoutId": {
+    "$oid": "6971ab0493e98bfba543555"
+  }
+}
+``` 
+*Caution*: In NotificationTemplate 
     - `check` (Optional): If set to true, Novu will attempt to verify the connection during creation. It is recommended to keep it false if you just want to save the settings first.
     - Make sure that `type` is `"email"` 
 
