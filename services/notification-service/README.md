@@ -128,7 +128,7 @@ Message is a single notification that is sent to a subscriber. Each channel step
   "check": false
 }
 ```
-4. API Service creates an NotoficationTemplate Entity:
+4. API Service creates an NotificationTemplate Entity:
 ```JSON
 {
   "_id": {
@@ -189,9 +189,11 @@ Message is a single notification that is sent to a subscriber. Each channel step
         - `content`: The body of the email (HTML supported). Variables used here must match the data sent from your Go backend.
         - `layoutIdentifier`: Points to a specific email layout (header/footer). `"default"` uses Novu's standard system layout.
 2. Add a header's key `Novu-Environment-Id` using an Environment that belong to the User's Organization (This solve the Critical Bug - Issue of the UI)
-3. Create workflow: `POST /v2/workflows`
+3. Create workflow: `POST /v1/workflows`
 
-*Caution*: When passing variables in the email body or subject, you must include the correct namespace. Variables from the trigger call should be prefixed with payload (e.g., `{{payload.variableName}}`), while subscriber data must use the subscriber prefix (e.g., `{{subscriber.firstName}}`). Using naked variables like `{{variableName}}` will result in a validation error.
+*Caution*: 
+- The Free version limits 18 workflow
+- When passing variables in the email body or subject, you must include the correct namespace. Variables from the trigger call should be prefixed with payload (e.g., `{{payload.variableName}}`), while subscriber data must use the subscriber prefix (e.g., `{{subscriber.firstName}}`). Using naked variables like `{{variableName}}` will result in a validation error.
 ```HTML
 <div style=\"font-family: Arial; padding: 20px;\">
     <h2>Verify Email</h2>
