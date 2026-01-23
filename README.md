@@ -7,7 +7,10 @@ Instead of one big application, we will split the logic into three core services
 - Account Service: Manages bank accounts, wallet balances, and currency types.
 - Transaction Service: Handles the logic of moving money from Wallet A to Wallet B (The "Engine").
 
-### Service Breakdown
+Utility/Support Service:
+- Nottification Service: A dedicated, asynchronous support service responsible for managing all outgoing communications between the system and its users
+
+### Core Service Breakdown
 
 #### Service A: Identity & Auth
 - Focus: Security and Middleware.
@@ -28,29 +31,15 @@ Instead of one big application, we will split the logic into three core services
 - Key Tasks: `POST /transfer`: Transfer money between users.
 - Crucial Concept: Using Database Transactions to ensure that if the sender's deduction fails, the receiver's credit never happens.
 
-## API Contract Document
+## Security
+The most secure way is to use the openssl tool, which is pre-installed on Linux, macOS, and Git Bash for Windows.
 
-- Update document:
+- For `JWT_SECRET`: Run this to get a long random string:
 ```Bash
-swag init -g cmd/api/main.go
+openssl rand -base64 32
 ```
 
-- Endpoint: `http://localhost:3000/docs/index.html`
-
-## Database Migration
-
-### Using Atlas
-- Change the `DB_AUTO_MIGRATE` in `.env` to `true`
-- Create migration file: 
-```bash
-atlas migrate diff <file_name> --env gorm
+- For `STORE_ENCRYPTION_KEY`: Run this to get exactly 32 hex characters:
+```Bash
+openssl rand -hex 16
 ```
-- Run migration:
-```bash
-atlas migrate apply --env gorm --url "postgres://user:pass@localhost:5432/dbname?sslmode=disable"
-```
-
-### Using AutoMigration
-- Change the `DB_AUTO_MIGRATE` in `.env` to `false`
-- Run the server
-
