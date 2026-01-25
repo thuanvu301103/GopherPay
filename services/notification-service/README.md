@@ -34,6 +34,52 @@ These are useful for checking if your services are running correctly:
 - Swagger UI - Documentation (DEPRECATED): Usually available at `http://localhost:3004/api` (depending on the version, it provides a full list of all available REST endpoints).
 - OpenAPI JSON, YAML - (Import to `Postman`): `http://localhost:3004/api-json` or `http://localhost:3004/api-yaml`
 
+## Architecture
+
+```mermaid
+graph TD
+
+    subgraph Entry_Point [Entry Point]
+        LB[Load Balancer]
+        API[Novu API Service - NestJS]
+    end
+
+    subgraph Execution_Layer [Execution & Logic]
+        Worker[Workflow Worker - BullMQ]
+        WS[Websocket Service - Real-time]
+        Dashboard[Web Dashboard - React]
+    end
+
+    subgraph Data_Persistence [Data & Queue]
+        Redis[(Redis - Queues & Caching)]
+        DB[(MongoDB - State & Config)]
+    end
+
+    subgraph External_Integrations [Delivery Providers]
+        Email[Email: SendGrid, Postmark...]
+        SMS[SMS: Twilio, MessageBird...]
+        Push[Push: FCM, APNS...]
+        Chat[Chat: Slack, MS Teams...]
+    end
+
+    %% Data Flow
+    LB --> API
+    API --> DB
+    API --> Redis
+    
+    Redis <--> Worker
+    Worker --> DB
+    
+    Worker --> Email
+    Worker --> SMS
+    Worker --> Push
+    Worker --> Chat
+    
+    Worker --> WS
+    
+    Dashboard --> API
+```
+
 ## Core Entities
 
 ### User
