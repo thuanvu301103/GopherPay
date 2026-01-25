@@ -2,8 +2,8 @@
 
 ## Run Service using Docker
 ```Bash
-docker compose down
-docker compose up -d --pull always
+docker compose down -v
+docker compose up -d
 ```
 
 ## Important Endpoints
@@ -33,6 +33,52 @@ These are useful for checking if your services are running correctly:
 - API Health Check: `http://localhost:3004/v1/health-check`
 - Swagger UI - Documentation (DEPRECATED): Usually available at `http://localhost:3004/api` (depending on the version, it provides a full list of all available REST endpoints).
 - OpenAPI JSON, YAML - (Import to `Postman`): `http://localhost:3004/api-json` or `http://localhost:3004/api-yaml`
+
+## Architecture
+
+```mermaid
+graph TD
+
+    subgraph Entry_Point [Entry Point]
+        LB[Load Balancer]
+        API[Novu API Service - NestJS]
+    end
+
+    subgraph Execution_Layer [Execution & Logic]
+        Worker[Workflow Worker - BullMQ]
+        WS[Websocket Service - Real-time]
+        Dashboard[Web Dashboard - React]
+    end
+
+    subgraph Data_Persistence [Data & Queue]
+        Redis[(Redis - Queues & Caching)]
+        DB[(MongoDB - State & Config)]
+    end
+
+    subgraph External_Integrations [Delivery Providers]
+        Email[Email: SendGrid, Postmark...]
+        SMS[SMS: Twilio, MessageBird...]
+        Push[Push: FCM, APNS...]
+        Chat[Chat: Slack, MS Teams...]
+    end
+
+    %% Data Flow
+    LB --> API
+    API --> DB
+    API --> Redis
+    
+    Redis <--> Worker
+    Worker --> DB
+    
+    Worker --> Email
+    Worker --> SMS
+    Worker --> Push
+    Worker --> Chat
+    
+    Worker --> WS
+    
+    Dashboard --> API
+```
 
 ## Core Entities
 
@@ -90,11 +136,32 @@ Message is a single notification that is sent to a subscriber. Each channel step
 
 ### Initial Root Admin & Organization
 1. Register a new User (admin/developer): `POST /v1/auth/register`
+```JSON
+{
+    "firstName": "Admin",
+    "lastName": "Gopher",
+    "email": "admin@gopher.com",
+    "password": "xxxxxxxxx"
+}
+```
 2. Login: `POST /v1/auth/login`
+```JSON
+{
+    "email": "admin@gopher.com",
+    "password": "xxxxxxxxx"
+}
+```
 3. Copy the returned token
 4. Create an Organization: `POST /v1/organizations`
+```JSON
+{
+    "name": "Gopher Pay"
+}
+```
 5. A member relation between the User and the Organization is created automatically with role `"admin"`
-6. Make sure that at least one Environement belongs to user's Organization. Else, create a default Environtment `POST /v1/environments`
+6. Make sure that at least one Environement belongs to user's Organization. Else, create a default Environtment `POST /v1/environments`.
+
+*Caution*: From this point, we only use *Development* environment
 
 ### Configure the Email Integration (GMail SMTP)
 1. Connection Settings:
@@ -113,13 +180,12 @@ Message is a single notification that is sent to a subscriber. Each channel step
 {
   "providerId": "nodemailer",
   "channel": "email",
-  "type": "email",
+  "name": "Gmailer",
   "_environmentId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx",
   "credentials": {
     "host": "smtp.gmail.com",
-    "port": "465",
-    "secure": true,
-    "user": "admin@yourdomain.com",
+    "port": "587",
+    "secure": false,
     "password": "xxxx-xxxx-xxxx-xxxx",
     "from": "admin@yourdomain.com",
     "user": "admin@yourdomain.com"
@@ -128,11 +194,46 @@ Message is a single notification that is sent to a subscriber. Each channel step
   "check": false
 }
 ```
+*Caution*: In NotificationTemplate 
+    - `check` (Optional): If set to true, Novu will attempt to verify the connection during creation. It is recommended to keep it false if you just want to save the settings first.
+    - Make sure that `type` is `"email"` 
+
+### Create Notification Workflow (Verification Email Workflow)
+1. Define Workflow steps (only 1 step):
+    - `type`: Defines the communication channel. In this case, `"email"`. Novu will automatically route this to your active Email Integration (Gmail).
+    - `template`: Contains the actual message details:
+        - `name`: The indentifier of the step
+        - `subject`: The email's subject line. Supports variables like `{{variable}}` (e.g. `"Mã xác nhận của bạn là {{otpCode}}"`).
+        - `content`: The body of the email (HTML supported). Variables used here must match the data sent from your Go backend.
+        - `layoutIdentifier`: Points to a specific email layout (header/footer). `"default"` uses Novu's standard system layout.
+2. Add a header's key `Novu-Environment-Id` using an Environment that belong to the User's Organization (This solve the Critical Bug - Issue of the UI)
+3. Create workflow: `POST /v1/workflows`
+```JSON
+{
+    "name": "Email Verification",
+    "description": "Email Verification",
+    "active": true,
+    "notificationGroupId": "{{notificaionGroupId}}",
+    "type": "workflow",
+    "steps": [
+        {
+            "name": "Send verification email",
+            "template": {
+                "type": "email",
+                "subject": "Confirm Email",
+                "content": "Hi {{subscriber.firstName}}, click here: {{verificationLink}}",
+                "contentType": "html",
+                "layoutIdentifier": "default"   // Choose a 'default' Layout Entity
+            }
+        }
+    ]
+}
+```
 4. API Service creates an NotificationTemplate Entity:
 ```JSON
 {
   "_id": {
-    "$oid": "6971ab0493e98bfba5435ba9"
+    "$oid": "xxxxx-xxx-xxx-xxx-xx"
   },
   "name": "Email Verification",
   "description": "Email Verification",
@@ -149,10 +250,10 @@ Message is a single notification that is sent to a subscriber. Each channel step
       "type": "REGULAR",
       "filters": [],
       "_templateId": {
-        "$oid": "6971ab0493e98bfba5435ba5"  // Id of related MessageTemplate
+        "$oid": "xxxxx-xxx-xxx-xxx-xx"  // Id of related MessageTemplate
       },
       "_id": {
-        "$oid": "6971ab0493e98bfba5435ba5"
+        "$oid": "xxxxx-xxx-xxx-xxx-xx"
       },
       "variants": []
     }
@@ -170,26 +271,12 @@ Message is a single notification that is sent to a subscriber. Each channel step
   "name": "Send email",
   "subject": "Confirm Email",
   "contentType": "html",
-  "content": "Hi {{subscriber.firstName}}, click here: {{verificationLink}}"
+  "content": "Hi {{subscriber.firstName}}, click here: {{verificationLink}}",
   "_layoutId": {
     "$oid": "6971ab0493e98bfba543555"
   }
 }
 ``` 
-*Caution*: In NotificationTemplate 
-    - `check` (Optional): If set to true, Novu will attempt to verify the connection during creation. It is recommended to keep it false if you just want to save the settings first.
-    - Make sure that `type` is `"email"` 
-
-### Create Notification Workflow (Verification Email Workflow)
-1. Define Workflow steps (only 1 step):
-    - `type`: Defines the communication channel. In this case, `"email"`. Novu will automatically route this to your active Email Integration (Gmail).
-    - `template`: Contains the actual message details:
-        - `name`: The indentifier of the step
-        - `subject`: The email's subject line. Supports variables like `{{variable}}` (e.g. `"Mã xác nhận của bạn là {{otpCode}}"`).
-        - `content`: The body of the email (HTML supported). Variables used here must match the data sent from your Go backend.
-        - `layoutIdentifier`: Points to a specific email layout (header/footer). `"default"` uses Novu's standard system layout.
-2. Add a header's key `Novu-Environment-Id` using an Environment that belong to the User's Organization (This solve the Critical Bug - Issue of the UI)
-3. Create workflow: `POST /v1/workflows`
 
 *Caution*: 
 - The Free version limits 18 workflow
@@ -197,8 +284,8 @@ Message is a single notification that is sent to a subscriber. Each channel step
 ```HTML
 <div style=\"font-family: Arial; padding: 20px;\">
     <h2>Verify Email</h2>
-    <p>Hi {{payload.firstName}},</p>
-    <a href=\"{{payload.verificationLink}}\" 
+    <p>Hi {{subcriber.firstName}},</p>
+    <a href=\"{{verificationLink}}\" 
         style=\"background: #4F46E5; 
         color: white; 
         padding: 12px 20px; 
@@ -216,7 +303,7 @@ This workflow is usually peform by a third-party (Auth Service)
 {
     "subscriberId": "123456789",    // Usually user's id stored in third-party's database
     "email": "receiver@gmail.com",
-    "firstName": "Thuận"
+    "firstName": "John"
 }
 ```
 2. Define Email's payload
