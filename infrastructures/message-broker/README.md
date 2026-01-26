@@ -100,26 +100,6 @@ This is why Kafka is fast. If you have 10 partitions, you can have 10 different 
 - Consumer Managed: The Consumer (or the Kafka cluster on behalf of the consumer) stores the last successful offset it processed.
 - Example: If a consumer crashes at Offset 500, when it restarts, it asks Kafka: "Give me everything starting from Offset 501."
 
-```mermaid
-graph TD
-    subgraph Topic: "Orders"
-        subgraph Partition_0 [Partition 0]
-            direction LR
-            M0[Offset 0] --> M1[Offset 1] --> M2[Offset 2] --> M3[Offset 3]
-        end
-        subgraph Partition_1 [Partition 1]
-            direction LR
-            N0[Offset 0] --> N1[Offset 1] --> N2[Offset 2]
-        end
-    end
-
-    Producer -->|Key: User_1| Partition_0
-    Producer -->|Key: User_2| Partition_1
-
-    Partition_0 -->|Read by| Consumer_A
-    Partition_1 -->|Read by| Consumer_B
-```
-
 ## Guarantees and Durability
 - Replication: Kafka copies your partitions across multiple brokers. If one server goes down, another takes over without losing data.
 - Persistence: It writes data to disk immediately. Unlike traditional message queues that hold data in RAM, Kafka is built to be a durable storage system.
