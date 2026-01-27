@@ -8,7 +8,10 @@ Instead of one big application, we will split the logic into three core services
 - Transaction Service: Handles the logic of moving money from Wallet A to Wallet B (The "Engine").
 
 Utility/Support Service:
-- Nottification Service: A dedicated, asynchronous support service responsible for managing all outgoing communications between the system and its users
+- Nottification Service (Novu): A dedicated, asynchronous support service responsible for managing all outgoing communications between the system and its users
+
+Infrastructures:
+- Message Broker (Apache Kafka): The asynchronous backbone that decouples the core services from the support services
 
 ### Core Service Breakdown
 
