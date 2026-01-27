@@ -59,6 +59,9 @@ func main() {
 	// 5. MAP ROUTER
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	auth.MapRoutes(r, db)
+	// 5. MAP ROUTER
+	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	auth.MapRoutes(r, db)
 
 	// 6. START SERVER
 	log.Printf("Server starting on port %s", cfg.Port)
