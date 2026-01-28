@@ -39,6 +39,7 @@ func main() {
 		slog.Error("Failed to load configuration", "error", err)
 		os.Exit(1)
 	}
+	slog.Info("Configuration loaded successfully")
 
 	// 3. CONNECT TO DATABASE
 	db, err := database.InitPostgres(cfg.DbURL)
@@ -46,6 +47,7 @@ func main() {
 		slog.Error("Database connection failed", "url", cfg.DbURL, "error", err)
 		os.Exit(1)
 	}
+	slog.Info("Database setup successfully")
 
 	// 4. AUTO MIGRATE
 	if cfg.DbMigrate {
@@ -60,6 +62,7 @@ func main() {
 	// 5. SETUP INFRASTRUCTURE
 	// We use the NewProducer which now returns (*Producer, error)
 	kafkaProducer := kafka.NewProducer(cfg)
+	slog.Info("Kafka infrastructure setup successfully")
 	/*if err != nil {
 		slog.Error("Kafka infrastructure setup failed", "error", err)
 		os.Exit(1)
@@ -69,10 +72,12 @@ func main() {
 	// 6. SETUP GIN ROUTER
 	gin.SetMode(gin.ReleaseMode) // Optional: cleaner logs in production
 	r := gin.Default()
+	slog.Info("GIN router setup successfully")
 
 	// 7. MAP ROUTER
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	auth.MapRoutes(r, db, kafkaProducer)
+	slog.Info("Map router setup successfully")
 
 	// 8. START SERVER
 	slog.Info("Application server is starting", "port", cfg.Port)
