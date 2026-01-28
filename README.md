@@ -20,9 +20,6 @@ Infrastructures:
 - Key Tasks: 
     - `POST /auth/register` 
     - `POST /auth/login`.
-- Key Tasks: 
-    - `POST /auth/register` 
-    - `POST /auth/login`.
 - Use Bcrypt for password hashing.
 - Generate JWT (JSON Web Tokens) for authenticated requests.
 
@@ -36,7 +33,6 @@ Infrastructures:
 
 #### Service C: Transaction Engine (The Core)
 - Focus: Concurrency and Atomicity.
-- Key Tasks: `POST /transfer`: Transfer money between users.
 - Key Tasks: `POST /transfer`: Transfer money between users.
 - Crucial Concept: Using Database Transactions to ensure that if the sender's deduction fails, the receiver's credit never happens.
 
