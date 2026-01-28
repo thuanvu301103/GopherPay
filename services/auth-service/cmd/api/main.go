@@ -1,12 +1,14 @@
 package main
 
 import (
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/thuanvu301103/auth-service/internal/auth"
 	"github.com/thuanvu301103/auth-service/internal/config"
 	"github.com/thuanvu301103/auth-service/internal/database"
+	"github.com/thuanvu301103/auth-service/internal/infrastructure/kafka"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -26,46 +28,56 @@ import (
 // @BasePath  /api/v1/
 
 func main() {
-	// 1. LOAD CONFIGURATION (Viper)
+	// 1. INITIALIZE STRUCTURED LOGGER
+	// This replaces log.Printf with structured JSON for better monitoring
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	// 2. LOAD CONFIGURATION
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("Could not load config: %v", err)
+		slog.Error("Failed to load configuration", "error", err)
+		os.Exit(1)
 	}
 
-	// 2. CONNECT TO DATABASE (GORM)
+	// 3. CONNECT TO DATABASE
 	db, err := database.InitPostgres(cfg.DbURL)
 	if err != nil {
-		log.Fatalf("Could not connect to database: %v", err)
+		slog.Error("Database connection failed", "url", cfg.DbURL, "error", err)
+		os.Exit(1)
 	}
 
-	// 3. AUTO MIGRATE
+	// 4. AUTO MIGRATE
 	if cfg.DbMigrate {
-		log.Println("Option DB_AUTO_MIGRATE is ON. Starting migration...")
-		err := db.AutoMigrate(
-			&auth.User{},
-		)
-
-		if err != nil {
-			log.Fatalf("Migration failed: %v", err)
+		slog.Info("Database auto-migration is enabled")
+		if err := db.AutoMigrate(&auth.User{}); err != nil {
+			slog.Error("Migration failed", "error", err)
+			os.Exit(1)
 		}
-		log.Println("Database migration completed!")
-	} else {
-		log.Println("Option DB_AUTO_MIGRATE is OFF. Skipping migration.")
+		slog.Info("Database migration successful")
 	}
 
-	// 4. SETUP GIN ROUTER
+	// 5. SETUP INFRASTRUCTURE
+	// We use the NewProducer which now returns (*Producer, error)
+	kafkaProducer := kafka.NewProducer(cfg)
+	/*if err != nil {
+		slog.Error("Kafka infrastructure setup failed", "error", err)
+		os.Exit(1)
+	}*/
+	defer kafkaProducer.Close()
+
+	// 6. SETUP GIN ROUTER
+	gin.SetMode(gin.ReleaseMode) // Optional: cleaner logs in production
 	r := gin.Default()
 
-	// 5. MAP ROUTER
+	// 7. MAP ROUTER
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	auth.MapRoutes(r, db)
-	// 5. MAP ROUTER
-	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	auth.MapRoutes(r, db)
+	auth.MapRoutes(r, db, kafkaProducer)
 
-	// 6. START SERVER
-	log.Printf("Server starting on port %s", cfg.Port)
+	// 8. START SERVER
+	slog.Info("Application server is starting", "port", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {
-		log.Fatalf("Failed to run server: %v", err)
+		slog.Error("Server shutdown unexpectedly", "error", err)
+		os.Exit(1)
 	}
 }

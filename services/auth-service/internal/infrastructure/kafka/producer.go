@@ -2,32 +2,48 @@ package kafka
 
 import (
 	"context"
-	"github.com/segmentio/kafka-go"
 	"log"
+	"time"
+
+	"github.com/segmentio/kafka-go"
+	"github.com/thuanvu301103/auth-service/internal/config"
 )
 
 type Producer struct {
 	Writer *kafka.Writer
 }
 
-func NewProducer(cfg Config, topic string) *Producer {
+func parseRequiredAcks(s string) kafka.RequiredAcks {
+	switch s {
+	case "all":
+		return kafka.RequireAll
+	case "one":
+		return kafka.RequireOne
+	case "none":
+		return kafka.RequireNone
+	default:
+		return kafka.RequireAll
+	}
+}
+
+func NewProducer(cfg config.Config) *Producer {
 	return &Producer{
 		Writer: &kafka.Writer{
 			Addr:     kafka.TCP(cfg.KafkaBrokers...),
-			Topic:    topic,
 			Balancer: &kafka.LeastBytes{},
 			// Other configuration
-			RequiredAcks: kafka.RequiredAcks(cfg.KafkaRequiredAcks),
+			RequiredAcks: kafka.RequiredAcks(parseRequiredAcks(cfg.KafkaRequiredAcks)),
 			Async:        cfg.KafkaAsync,
 
-			WriteTimeout: 10 * time.Second,
-            ReadTimeout:  10 * time.Second,
+			WriteTimeout: time.Duration(cfg.KafkaTimeout) * time.Second,
+			ReadTimeout:  time.Duration(cfg.KafkaTimeout) * time.Second,
 		},
 	}
 }
 
-func (p *Producer) Publish(ctx context.Context, key, value []byte) error {
+func (p *Producer) Publish(ctx context.Context, topic string, key, value []byte) error {
 	err := p.Writer.WriteMessages(ctx, kafka.Message{
+		Topic: topic,
 		Key:   key,
 		Value: value,
 	})

@@ -12,9 +12,16 @@ type Config struct {
 	KafkaBrokers []string `mapstructure:"KAFKA_BROKERS"`
 	KafkaRequiredAcks string `mapstructure:"KAFKA_REQUIRED_ACKS"`
 	KafkaAsync bool `mapstructure:"KAFKA_ASYNC"`
+	KafkaTimeout int `mapstructure:"KAFKA_TIMEOUT"`
 }
 
 func LoadConfig() (config Config, err error) {
+	// Set default
+	viper.SetDefault("PORT", "8080")
+    viper.SetDefault("KAFKA_REQUIRED_ACKS", "all")
+    viper.SetDefault("KAFKA_ASYNC", false)
+    viper.SetDefault("KAFKA_TIMEOUT", 10)
+    viper.SetDefault("DB_AUTO_MIGRATE", true)
 
 	viper.AddConfigPath(".") // Look for config in the root directory
 	viper.SetConfigFile(".env")
