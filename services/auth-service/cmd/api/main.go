@@ -24,7 +24,9 @@ import (
 // @contact.url    http://www.swagger.io/support
 // @contact.email  vungocthuan1234@gmail.com
 
-// @host      localhost:3000
+// @schemes         http https
+
+// @host      localhost:3004
 // @BasePath  /api/v1/
 
 func main() {
@@ -52,7 +54,11 @@ func main() {
 	// 4. AUTO MIGRATE
 	if cfg.DbMigrate {
 		slog.Info("Database auto-migration is enabled")
-		if err := db.AutoMigrate(&auth.User{}); err != nil {
+		err := db.AutoMigrate(
+			&auth.User{},
+			&auth.EmailVerification{},
+		)
+		if err != nil {
 			slog.Error("Migration failed", "error", err)
 			os.Exit(1)
 		}
@@ -63,10 +69,6 @@ func main() {
 	// We use the NewProducer which now returns (*Producer, error)
 	kafkaProducer := kafka.NewProducer(cfg)
 	slog.Info("Kafka infrastructure setup successfully")
-	/*if err != nil {
-		slog.Error("Kafka infrastructure setup failed", "error", err)
-		os.Exit(1)
-	}*/
 	defer kafkaProducer.Close()
 
 	// 6. SETUP GIN ROUTER
@@ -76,7 +78,7 @@ func main() {
 
 	// 7. MAP ROUTER
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	auth.MapRoutes(r, db, kafkaProducer)
+	auth.MapRoutes(r, db, kafkaProducer, cfg)
 	slog.Info("Map router setup successfully")
 
 	// 8. START SERVER

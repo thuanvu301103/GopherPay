@@ -48,13 +48,13 @@ definitions:
       fullName:
         type: string
       id:
-        type: integer
+        type: string
       isActive:
         type: boolean
       updatedAt:
         type: string
     type: object
-host: localhost:3000
+host: localhost:3004
 info:
   contact:
     email: vungocthuan1234@gmail.com
@@ -93,4 +93,7 @@ paths:
       summary: User Registration
       tags:
       - Authentication
+schemes:
+- http
+- https
 swagger: "2.0"

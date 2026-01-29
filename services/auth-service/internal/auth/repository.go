@@ -10,6 +10,8 @@ type Repository interface {
 	CreateUser(ctx context.Context, user *User) error
 	FindByEmail(ctx context.Context, email string) (*User, error)
 	FindByID(ctx context.Context, id uint) (*User, error)
+
+	CreateEmailVerification(ctx context.Context, emailVerification *EmailVerification) error
 }
 
 type repository struct {
@@ -39,4 +41,8 @@ func (r *repository) FindByID(ctx context.Context, id uint) (*User, error) {
 	var user User
 	err := r.db.WithContext(ctx).First(&user, id).Error
 	return &user, err
+}
+
+func (r *repository) CreateEmailVerification(ctx context.Context, emailVerification *EmailVerification) error {
+	return r.db.WithContext(ctx).Create(emailVerification).Error
 }

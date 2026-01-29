@@ -18,7 +18,7 @@ func NewController(svc Service) *Controller {
 
 // Register godoc
 // @Summary      User Registration
-// @Description  Register a new user with email and password
+// @Description  Register a new user with email and password. The system also send a verification email to user
 // @Tags         Authentication
 // @Accept       json
 // @Produce      json

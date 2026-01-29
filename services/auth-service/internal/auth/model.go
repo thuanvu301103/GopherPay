@@ -3,23 +3,45 @@ package auth
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 // Data Entities
 type User struct {
-	ID        uint           `gorm:"primaryKey" json:"id"`
-	Email     string         `gorm:"uniqueIndex;not null;size:255" json:"email"`
-	Password  string         `gorm:"not null" json:"-"`
-	FullName  string         `gorm:"size:100" json:"fullName"`
-	IsActive  bool           `gorm:"index;default:false" json:"isActive"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	Email     string    `gorm:"uniqueIndex;not null;size:255" json:"email"`
+	Password  string    `gorm:"not null" json:"-"`
+	FullName  string    `gorm:"size:100" json:"fullName"`
+	IsActive  bool      `gorm:"index;default:false" json:"isActive"`
+	IsDeleted bool      `gorm:"index;default:false" json:"-"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) error {
+	var err error
+	u.ID, err = uuid.NewV7()
+	return err
+}
+
+type EmailVerification struct {
+	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
+	UserID    uuid.UUID `gorm:"not null;index"`
+	Token     string    `gorm:"not null; index"`
+	CreatedAt time.Time
+	ExpiresAt time.Time `gorm:"not null"`
+
+	User User `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+}
+
+func (e *EmailVerification) BeforeCreate(tx *gorm.DB) error {
+	var err error
+	e.ID, err = uuid.NewV7()
+	return err
 }
 
 // Dtos
-
 
 type RegisterRequest struct {
 	// User's email

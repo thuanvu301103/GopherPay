@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/segmentio/kafka-go"
@@ -48,7 +47,6 @@ func (p *Producer) Publish(ctx context.Context, topic string, key, value []byte)
 		Value: value,
 	})
 	if err != nil {
-		log.Printf("Could not write message to Kafka: %v", err)
 		return err
 	}
 	return nil
