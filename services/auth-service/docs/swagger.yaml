@@ -1,14 +1,5 @@
-basePath: /
+basePath: /api/v1/
 definitions:
-  auth.AuthResponse:
-    properties:
-      accessToken:
-        type: string
-      tokenType:
-        type: string
-      user:
-        $ref: '#/definitions/auth.User'
-    type: object
   auth.RegisterRequest:
     properties:
       confirmPassword:
@@ -34,6 +25,20 @@ definitions:
     - fullName
     - password
     type: object
+  auth.RegisterResponse:
+    properties:
+      message:
+        description: Successfully registered message
+        example: Registration successful. Please check your email
+        type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/auth.User'
+        description: User's information
+    required:
+    - message
+    - user
+    type: object
   auth.User:
     properties:
       createdAt:
@@ -43,11 +48,13 @@ definitions:
       fullName:
         type: string
       id:
-        type: integer
+        type: string
+      isActive:
+        type: boolean
       updatedAt:
         type: string
     type: object
-host: localhost:3000
+host: localhost:3004
 info:
   contact:
     email: vungocthuan1234@gmail.com
@@ -76,7 +83,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/auth.AuthResponse'
+            $ref: '#/definitions/auth.RegisterResponse'
         "400":
           description: Bad Request
           schema:
@@ -86,4 +93,7 @@ paths:
       summary: User Registration
       tags:
       - Authentication
+schemes:
+- http
+- https
 swagger: "2.0"

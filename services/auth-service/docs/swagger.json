@@ -1,4 +1,8 @@
 {
+    "schemes": [
+        "http",
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
         "description": "This is a sample server for Auth Service.",
@@ -11,8 +15,8 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:3000",
-    "basePath": "/",
+    "host": "localhost:3004",
+    "basePath": "/api/v1/",
     "paths": {
         "/auth/register": {
             "post": {
@@ -42,7 +46,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/auth.AuthResponse"
+                            "$ref": "#/definitions/auth.RegisterResponse"
                         }
                     },
                     "400": {
@@ -59,20 +63,6 @@
         }
     },
     "definitions": {
-        "auth.AuthResponse": {
-            "type": "object",
-            "properties": {
-                "accessToken": {
-                    "type": "string"
-                },
-                "tokenType": {
-                    "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/auth.User"
-                }
-            }
-        },
         "auth.RegisterRequest": {
             "type": "object",
             "required": [
@@ -105,6 +95,28 @@
                 }
             }
         },
+        "auth.RegisterResponse": {
+            "type": "object",
+            "required": [
+                "message",
+                "user"
+            ],
+            "properties": {
+                "message": {
+                    "description": "Successfully registered message",
+                    "type": "string",
+                    "example": "Registration successful. Please check your email"
+                },
+                "user": {
+                    "description": "User's information",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/auth.User"
+                        }
+                    ]
+                }
+            }
+        },
         "auth.User": {
             "type": "object",
             "properties": {
@@ -118,7 +130,10 @@
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
                 },
                 "updatedAt": {
                     "type": "string"

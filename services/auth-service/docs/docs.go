@@ -48,7 +48,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/auth.AuthResponse"
+                            "$ref": "#/definitions/auth.RegisterResponse"
                         }
                     },
                     "400": {
@@ -65,20 +65,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.AuthResponse": {
-            "type": "object",
-            "properties": {
-                "accessToken": {
-                    "type": "string"
-                },
-                "tokenType": {
-                    "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/auth.User"
-                }
-            }
-        },
         "auth.RegisterRequest": {
             "type": "object",
             "required": [
@@ -111,6 +97,28 @@ const docTemplate = `{
                 }
             }
         },
+        "auth.RegisterResponse": {
+            "type": "object",
+            "required": [
+                "message",
+                "user"
+            ],
+            "properties": {
+                "message": {
+                    "description": "Successfully registered message",
+                    "type": "string",
+                    "example": "Registration successful. Please check your email"
+                },
+                "user": {
+                    "description": "User's information",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/auth.User"
+                        }
+                    ]
+                }
+            }
+        },
         "auth.User": {
             "type": "object",
             "properties": {
@@ -124,7 +132,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -137,9 +148,9 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:3000",
-	BasePath:         "/",
-	Schemes:          []string{},
+	Host:             "localhost:3004",
+	BasePath:         "/api/v1/",
+	Schemes:          []string{"http", "https"},
 	Title:            "Gopher Swagger Example API",
 	Description:      "This is a sample server for Auth Service.",
 	InfoInstanceName: "swagger",

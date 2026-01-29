@@ -3,13 +3,28 @@ package config
 import "github.com/spf13/viper"
 
 type Config struct {
-	Port      string `mapstructure:"PORT"`
+	Port                  string `mapstructure:"PORT"`
+	JwtSecret             string `mapstructure:"JWT_SECRET"`
+	EmailVerifyExpireTime int    `mapstructure:"EMAIL_VERIFY_EXPIRE_TIME"`
+
 	DbURL     string `mapstructure:"DB_URL"`
 	DbMigrate bool   `mapstructure:"DB_AUTO_MIGRATE"`
-	JwtSecret string `mapstructure:"JWT_SECRET"`
+
+	KafkaBrokers          []string `mapstructure:"KAFKA_BROKERS"`
+	KafkaRequiredAcks     string   `mapstructure:"KAFKA_REQUIRED_ACKS"`
+	KafkaAsync            bool     `mapstructure:"KAFKA_ASYNC"`
+	KafkaTimeout          int      `mapstructure:"KAFKA_TIMEOUT"`
+	KafkaEmailVerifyTopic string   `mapstructure:"KAFKA_EMAIL_VEIFY_TOPIC"`
 }
 
 func LoadConfig() (config Config, err error) {
+	// Set default
+	viper.SetDefault("PORT", "8080")
+	viper.SetDefault("KAFKA_REQUIRED_ACKS", "all")
+	viper.SetDefault("KAFKA_ASYNC", false)
+	viper.SetDefault("KAFKA_TIMEOUT", 10)
+	viper.SetDefault("DB_AUTO_MIGRATE", true)
+	viper.SetDefault("EmailVerifyExpireTime", 15)
 
 	viper.AddConfigPath(".") // Look for config in the root directory
 	viper.SetConfigFile(".env")

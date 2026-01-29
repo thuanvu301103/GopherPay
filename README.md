@@ -28,6 +28,8 @@ Infrastructures:
 - Key Tasks:
     - `GET /accounts/me`: Fetch current balance.
     - `POST /accounts`: Create a new currency wallet (e.g., USD, VND).
+    - `GET /accounts/me`: Fetch current balance.
+    - `POST /accounts`: Create a new currency wallet (e.g., USD, VND).
 
 #### Service C: Transaction Engine (The Core)
 - Focus: Concurrency and Atomicity.
