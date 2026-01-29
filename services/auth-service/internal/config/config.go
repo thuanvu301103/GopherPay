@@ -10,10 +10,11 @@ type Config struct {
 	DbURL     string `mapstructure:"DB_URL"`
 	DbMigrate bool   `mapstructure:"DB_AUTO_MIGRATE"`
 
-	KafkaBrokers      []string `mapstructure:"KAFKA_BROKERS"`
-	KafkaRequiredAcks string   `mapstructure:"KAFKA_REQUIRED_ACKS"`
-	KafkaAsync        bool     `mapstructure:"KAFKA_ASYNC"`
-	KafkaTimeout      int      `mapstructure:"KAFKA_TIMEOUT"`
+	KafkaBrokers          []string `mapstructure:"KAFKA_BROKERS"`
+	KafkaRequiredAcks     string   `mapstructure:"KAFKA_REQUIRED_ACKS"`
+	KafkaAsync            bool     `mapstructure:"KAFKA_ASYNC"`
+	KafkaTimeout          int      `mapstructure:"KAFKA_TIMEOUT"`
+	KafkaEmailVerifyTopic string   `mapstructure:"KAFKA_EMAIL_VEIFY_TOPIC"`
 }
 
 func LoadConfig() (config Config, err error) {

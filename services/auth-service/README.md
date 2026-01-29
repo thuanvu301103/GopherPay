@@ -11,8 +11,8 @@ swag init -g cmd/api/main.go
 
 ## Data Entities
 
-1. User: A primary entity that stores permanent identity, credentials, and account status
-2. Email Verification: A transient entity that stores temporary tokens to validate email ownership within a specific timeframe.
+1. **User**: A primary entity that stores permanent identity, credentials, and account status
+2. **Email Verification**: A transient entity that stores temporary tokens to validate email ownership within a specific timeframe.
 
 ## Database Migration
 

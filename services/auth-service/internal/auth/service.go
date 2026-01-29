@@ -2,7 +2,9 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/thuanvu301103/auth-service/internal/config"
@@ -59,7 +61,7 @@ func (s *service) Register(ctx context.Context, req RegisterRequest) (*RegisterR
 	}
 
 	// 4. Create Verification Token pair
-	_, hashedToken, err := utils.GenerateVerificationToken()
+	rawToken, hashedToken, err := utils.GenerateVerificationToken()
 	if err != nil {
 		return nil, err
 	}
@@ -68,16 +70,32 @@ func (s *service) Register(ctx context.Context, req RegisterRequest) (*RegisterR
 	verification := &EmailVerification{
 		UserID:    user.ID,
 		Token:     hashedToken,
-		ExpiresAt: time.Now().Add(15 * time.Minute),
+		ExpiresAt: time.Now().Add(time.Duration(s.cfg.EmailVerifyExpireTime) * time.Minute),
 	}
 
 	if err := s.repo.CreateEmailVerification(ctx, verification); err != nil {
 		return nil, err
 	}
 
+	payload := map[string]string{
+		"email":  user.Email,
+		"userId": user.ID.String(),
+		"token":  rawToken,
+	}
+	byteData, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	s.kafkaProducer.Publish(ctx, s.cfg.KafkaEmailVerifyTopic, []byte(user.Email), byteData)
+
+	// 6. Return response
 	return &RegisterResponse{
-		Message: "Registration successful. Please check your email for verification code. The code will be valid within ${} minute",
-		User:    *user,
+		Message: fmt.Sprintf(
+			"Registration successful. Please check your email for verification code. The code will be valid within %d minutes.",
+			s.cfg.EmailVerifyExpireTime,
+		),
+		User: *user,
 	}, nil
 }
 
