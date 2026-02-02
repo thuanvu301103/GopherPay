@@ -2,22 +2,63 @@ services:
   kafka:
     image: apache/kafka:latest
     container_name: kafka_broker
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
-      - "${KAFKA_HOST_PORT}:9092"
+      - "${KAFKA_EXTERNAL_PORT}:9092"
     environment:
-      # Apache Kafka Environment Variables (Standard)
       - KAFKA_NODE_ID=${KAFKA_NODE_ID}
       - KAFKA_PROCESS_ROLES=broker,controller
-      - KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_LISTENERS=EXTERNAL://:9092,INTERNAL://:29092,CONTROLLER://:9093
+      - KAFKA_ADVERTISED_LISTENERS=EXTERNAL://localhost:${KAFKA_EXTERNAL_PORT},INTERNAL://kafka:${KAFKA_INTERNAL_PORT}
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
       - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
       - KAFKA_CONTROLLER_QUORUM_VOTERS=${KAFKA_NODE_ID}@kafka:9093
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
       - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
     volumes:
       - kafka_data:/var/lib/kafka/data
+
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect:7.5.0
+    container_name: kafka_connect
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/connectors || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "${KAFKA_CONNECT_PORT}:8083"
+    environment:
+      - CONNECT_BOOTSTRAP_SERVERS=kafka:29092
+      - CONNECT_REST_PORT=8083
+      - CONNECT_GROUP_ID=connect-group
+      - CONNECT_CONFIG_STORAGE_TOPIC=connect-configs
+      - CONNECT_OFFSET_STORAGE_TOPIC=connect-offsets
+      - CONNECT_STATUS_STORAGE_TOPIC=connect-status
+      - CONNECT_KEY_CONVERTER=org.apache.kafka.connect.storage.StringConverter
+      - CONNECT_VALUE_CONVERTER=org.apache.kafka.connect.json.JsonConverter
+      - CONNECT_REST_ADVERTISED_HOST_NAME=kafka-connect
+      - CONNECT_PLUGIN_PATH=/usr/share/java,/usr/share/confluent-hub-components
+
+      - CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR=1
+      - CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR=1
+      - CONNECT_STATUS_STORAGE_REPLICATION_FACTOR=1
+    command: 
+      - /bin/bash
+      - -c 
+      - |
+        echo "Installing Plugins..."
+        confluent-hub install --no-prompt aiven/aiven-kafka-connect-http:0.14.0
+        /etc/confluent/docker/run
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -26,9 +67,12 @@ services:
       - "${KAFKA_UI_HOST_PORT}:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=${KAFKA_UI_NAME}
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME=connect-local
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS=http://kafka-connect:8083
     depends_on:
-      - kafka
+      kafka-connect:
+        condition: service_healthy
 
 volumes:
   kafka_data:
