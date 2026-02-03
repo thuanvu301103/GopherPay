@@ -154,11 +154,11 @@ flowchart TB
     %% ========================
 
     %% External Client -> Kafka
-    Producer -->|PLAINTEXT\nEXTERNAL :9092| Broker
+    Producer -->|PLAINTEXT - EXTERNAL :9092| Broker
 
     %% Kafka internal communication
-    Broker -->|INTERNAL :29092\nInter-broker| Broker
-    Controller -->|CONTROLLER :9093\nKRaft quorum| Broker
+    Broker -->|INTERNAL :29092 - Inter-broker| Broker
+    Controller -->|CONTROLLER :9093 - KRaft quorum| Broker
 
     %% Kafka Connect -> Kafka
     ConnectWorker -->|INTERNAL :29092| Broker
@@ -183,14 +183,14 @@ flowchart TB
 
 #### Kafka Broker (KRaft mode)
 
-1. **The Role of the Controller Quorum**
+1. **The Role of the Controller Quorum**: 
 In KRaft, brokers are assigned specific roles via the `process.roles` configuration. A node can be a `broker`, a `controller`, or both (combined mode).
 
     - *Active Controller*: One node in the quorum is elected as the leader. It manages the Metadata Log.
     - *Voters*: The other controllers in the quorum follow the leader, replicating the metadata log to ensure high availability.
     - *Observers*: Standard brokers that aren't part of the quorum but consume the metadata log to stay updated on cluster state.
 
-2. **Key Configuration Parameters**
+2. **Key Configuration Parameters**: 
 To enable KRaft, you must move away from the `zookeeper.connect` property. The following settings are mandatory in your `server.properties`:
 
 | Property | Description | 
@@ -206,6 +206,82 @@ Unlike ZooKeeper, where Kafka just "shows up" and registers, KRaft requires an e
 - Generate ID: `kafka-storage.sh random-uuid`
 - Format Log: `kafka-storage.sh format -t <UUID> -c /path/to/server.properties`
 
+#### Kafka Connect & Kafka Connectors
+
+1. **Kafka Connect (The Framework)**: 
+Kafka Connect is the runtime environment. It is a JVM (Java Virtual Machine) process that runs separately from your Kafka Brokers.
+- *Responsibility*: It handles the parts of data integration: reliability, scaling, fault tolerance, and offset management (remembering where it left off).
+- *Modes*: It can run in Standalone (one process) or Distributed (a cluster of workers) mode.
+- *The "Engine"*: It provides the REST API (usually on port `8083`) that allows you to manage and monitor data flows.
+- *Configuration*:
+
+| Parameter (Environment Variable) | Purpose & FunctionConnectivity | 
+| --- | --- | 
+| `CONNECT_BOOTSTRAP_SERVERS` | The list of Kafka Brokers used to establish the initial connection and discover the full cluster. |
+| `CONNECT_GROUP_ID` | A unique name for the Connect cluster. Workers with the same ID work together to share the load.| 
+| `CONNECT_REST_PORT` | The port for the REST interface (default: 8083) used to manage connectors via commands. | 
+| `CONNECT_REST_LISTENERS` | Defines the protocol and IP address the API listens on (e.g., http://0.0.0.0:8083). |
+| `CONNECT_REST_ADVERTISED_HOST_NAME` | The hostname that other workers in the cluster use to communicate with this specific worker. | 
+| `CONNECT_CONFIG_STORAGE_TOPIC` | Kafka topic where connector configurations (like DB credentials) are stored. | 
+| `CONNECT_OFFSET_STORAGE_TOPIC` | Kafka topic that stores how much data has been processed (pointers/offsets). |
+| `CONNECT_STATUS_STORAGE_TOPIC` | Kafka topic that tracks the health and state (Running/Failed) of connectors. | 
+| `CONNECT_..._REPLICATION_FACTOR` | Defines how many copies of internal topics are kept. 1 is for dev; 3 is for production | 
+| `CONNECT_KEY_CONVERTER` | The class used to serialize/deserialize the message Key (e.g., String, JSON, Avro) | 
+| `CONNECT_VALUE_CONVERTER` | The class used to serialize/deserialize the message Payload (Value) | 
+| `CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE` | If true, includes the data structure definition inside every message. | 
+| `CONNECT_PLUGIN_PATH` | The directory where Kafka Connect looks for connector .jar files (the "drivers"). |
+
+3. **Essential Kafka Connect REST API Reference**:
+
+| Action | HTTP Method | Endpoint | Purpose |
+| --- | --- | --- | --- |
+| List Plugins | `GET/connector-plugins` | Check available connectors (MySQL, S3, etc.). | 
+| List Connectors | `GET/connectors` | See all active connector names. | 
+| Create/Update | `PUT/connectors/{name}/config` | Create a new connector or update settings | 
+| Check Status | `GET/connectors/{name}/status` | Crucial: See if it is RUNNING or FAILED. | 
+| Get Config | `GET/connectors/{name}` | View the current configuration of a connector. |
+| Restart | `POST/connectors/{name}/restart` | Fix a connector that has crashed/failed. | 
+| Pause/Resume | `PUT/connectors/{name}/pause` | Temporarily stop data flow. | 
+| Delete | `DELETE/connectors/{name}` | Completely remove a connector. |
+
+4. **Example configuration for the popular Confluent HTTP Sink Connector**: The Configuration (JSON)You would send this JSON to the `PUT /connectors/http-sink-test/config` endpoint
+
+```JSON
+{
+  "name": "http-sink-test",
+  "config": {
+    "connector.class": "io.confluent.connect.http.HttpSinkConnector",
+    "tasks.max": "1",
+    "topics": "orders-topic",
+    "http.api.url": "https://api.your-service.com/v1/ingest",
+    "request.method": "POST",
+    "headers": "Content-Type:application/json|Authorization:Bearer your_token",
+    "confluent.topic.bootstrap.servers": "kafka:29092",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "concurrency.limit": "5",
+    "batch.max.size": "10",
+    "reporter.result.topic.name": "http-success-topic",
+    "reporter.error.topic.name": "http-error-topic"
+  }
+}
+```
+
+| Parameter | Purpose | 
+| `topics` | The Kafka topic that the connector "listens" to. | 
+| `http.api.url` | The destination URL where the data will be sent. |
+| `request.method` | Usually POST for sending new data. | 
+| `headers` | Used for authentication or content-type settings. | 
+| `batch.max.size` | How many Kafka records to bundle into a single HTTP request (better for performance). |
+| `reporter...topic` | Tracks which requests succeeded or failed—excellent for debugging. |
+
+2. **Kafka Connectors (The Plugins)**:
+A Kafka Connector is the specific implementation or "driver" designed to talk to a specific external system. These are typically JAR files that you download and place in the plugin.path of your Kafka Connect worker.
+- *Source Connectors*: Ingest data from an external system (e.g., Salesforce, MongoDB, MQTT) into Kafka.
+- *Sink Connectors*: Export data from Kafka to an external system (e.g., Snowflake, Amazon S3, Elasticsearch).
+- *Responsibility*: The connector only cares about how to talk to the specific database or API it was built for.
+
 ### Port Inventory
 
 #### Kafka Broker (apache/kafka)
@@ -215,3 +291,9 @@ Unlike ZooKeeper, where Kafka just "shows up" and registers, KRaft requires an e
 | 9092 | EXTERNAL | Client access from outside Docker | Producers / Consumers on host machine or external servers | 
 | 29092 | INTERNAL | Internal Docker network communication | Kafka Connect, Kafka UI, other Docker services |
 | 9093 | CONTROLLER | KRaft metadata quorum & controller communication | Kafka Broker itself (controller <-> broker) | 
+
+#### Kafka Connect
+
+| Port (default) | Purpose | Connectors |
+| --- | --- | --- |
+| 8083 | REST API for managing connectors | Kafka UI, curl, REST clients |

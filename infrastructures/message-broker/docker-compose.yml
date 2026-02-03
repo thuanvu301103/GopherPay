@@ -36,9 +36,9 @@ services:
       # Use the full path to the binary
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:${KAFKA_EXTERNAL_PORT} || exit 1"]
       interval: 10s
-      timeout: 10s   # Increased timeout
-      retries: 10    # Give it more chances to start
-      start_period: 30s # Crucial: Don't count failures during the first 30s of boot
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
 
   kafka-connect:
@@ -55,11 +55,11 @@ services:
 
     environment:
       # ===== Kafka =====
-      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
+      CONNECT_BOOTSTRAP_SERVERS: kafka:${KAFKA_INTERNAL_PORT}
 
       # ===== REST =====
-      CONNECT_REST_PORT: 8083
-      CONNECT_REST_LISTENERS: http://0.0.0.0:8083
+      CONNECT_REST_PORT: ${KAFKA_CONNECT_PORT}
+      CONNECT_REST_LISTENERS: http://0.0.0.0:${KAFKA_CONNECT_PORT}
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
 
       # ===== Connect cluster =====
@@ -82,7 +82,7 @@ services:
       CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/connectors"]
+      test: ["CMD", "curl", "-f", "http://localhost:${KAFKA_CONNECT_PORT}/connectors"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -95,10 +95,10 @@ services:
       - "${KAFKA_UI_HOST_PORT}:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=${KAFKA_UI_NAME}
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:${KAFKA_INTERNAL_PORT}
       # CRITICAL: Use the container_name if service_name fails
       - KAFKA_CLUSTERS_0_KAFKA_CONNECT_0_NAME=connect-local
-      - KAFKA_CLUSTERS_0_KAFKA_CONNECT_0_ADDRESS=http://kafka-connect:8083
+      - KAFKA_CLUSTERS_0_KAFKA_CONNECT_0_ADDRESS=http://kafka-connect:${KAFKA_CONNECT_PORT}
       - KAFKA_CLUSTERS_0_KAFKA_CONNECT_0_ENABLED=true
     depends_on:
       kafka-connect:
