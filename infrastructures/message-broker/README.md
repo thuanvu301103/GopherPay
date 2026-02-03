@@ -233,8 +233,8 @@ Kafka Connect is the runtime environment. It is a JVM (Java Virtual Machine) pro
 
 3. **Essential Kafka Connect REST API Reference**:
 
-| Action | HTTP Method | Endpoint | Purpose |
-| --- | --- | --- | --- |
+| Action | Endpoint | Purpose |
+| --- | --- | --- |
 | List Plugins | `GET/connector-plugins` | Check available connectors (MySQL, S3, etc.). | 
 | List Connectors | `GET/connectors` | See all active connector names. | 
 | Create/Update | `PUT/connectors/{name}/config` | Create a new connector or update settings | 
