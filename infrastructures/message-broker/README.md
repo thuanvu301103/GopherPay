@@ -6,7 +6,7 @@ docker compose down -v
 docker compose up -d
 ```
 
-## The Core Architecture
+## The Core Data Architecture
 Kafka operates on a Pub/Sub (Publish/Subscribe) model combined with a distributed commit log.
 
 ### Producers
@@ -104,3 +104,114 @@ This is why Kafka is fast. If you have 10 partitions, you can have 10 different 
 - Replication: Kafka copies your partitions across multiple brokers. If one server goes down, another takes over without losing data.
 - Persistence: It writes data to disk immediately. Unlike traditional message queues that hold data in RAM, Kafka is built to be a durable storage system.
 - Decoupling: Producers don't need to know who the consumers are. You can add a new consumer (like a data warehouse) weeks after the data was produced, and it can "replay" the history from the beginning.
+
+## The Core Deploy Architecture
+
+```mermaid
+flowchart TB
+    %% ========================
+    %% External World
+    %% ========================
+    subgraph External["External Clients / Users"]
+        Producer["Producer / Consumer Apps"]
+        Browser["Web Browser"]
+    end
+
+    %% ========================
+    %% Docker Network
+    %% ========================
+    subgraph Docker["Docker Network"]
+        
+        %% Kafka Broker
+        subgraph KafkaNode["Kafka Broker (KRaft Mode)"]
+            Broker["Kafka Broker"]
+            Controller["KRaft Controller"]
+
+            Broker --- Controller
+        end
+
+        %% Kafka Connect
+        subgraph Connect["Kafka Connect"]
+            ConnectWorker["Connect Worker"]
+            REST["REST API :8083"]
+        end
+
+        %% Kafka UI
+        subgraph UI["Kafka UI"]
+            Dashboard["Kafka UI Dashboard"]
+        end
+    end
+
+    %% ========================
+    %% Storage
+    %% ========================
+    subgraph Storage["Persistent Storage"]
+        Volume["kafka_data volume"]
+    end
+
+    %% ========================
+    %% Network Flows
+    %% ========================
+
+    %% External Client -> Kafka
+    Producer -->|PLAINTEXT\nEXTERNAL :9092| Broker
+
+    %% Kafka internal communication
+    Broker -->|INTERNAL :29092\nInter-broker| Broker
+    Controller -->|CONTROLLER :9093\nKRaft quorum| Broker
+
+    %% Kafka Connect -> Kafka
+    ConnectWorker -->|INTERNAL :29092| Broker
+
+    %% Kafka UI -> Kafka
+    Dashboard -->|INTERNAL :29092| Broker
+
+    %% Kafka UI -> Kafka Connect
+    Dashboard -->|HTTP :8083| REST
+
+    %% Browser -> Kafka UI
+    Browser -->|HTTP :8080| Dashboard
+
+    %% Storage binding
+    Broker --> Volume
+
+    %% Kafka Connect internal topics
+    ConnectWorker -.->|"connect-configs\nconnect-offsets\nconnect-status"| Broker
+```
+
+### Components
+
+#### Kafka Broker (KRaft mode)
+
+1. **The Role of the Controller Quorum**
+In KRaft, brokers are assigned specific roles via the `process.roles` configuration. A node can be a `broker`, a `controller`, or both (combined mode).
+
+    - *Active Controller*: One node in the quorum is elected as the leader. It manages the Metadata Log.
+    - *Voters*: The other controllers in the quorum follow the leader, replicating the metadata log to ensure high availability.
+    - *Observers*: Standard brokers that aren't part of the quorum but consume the metadata log to stay updated on cluster state.
+
+2. **Key Configuration Parameters**
+To enable KRaft, you must move away from the `zookeeper.connect` property. The following settings are mandatory in your `server.properties`:
+
+| Property | Description | 
+| --- | --- |
+| `process.roles` | Set to broker, controller, or broker,controller. |
+| `node.id` | A unique integer ID for the node in the cluster. |
+| `controller.quorum.voters` | A list of all controller nodes (e.g., `1@localhost:9093`,`2@localhost:9093`). |
+| `listeners` | Must include a listener for the controller (e.g., `CONTROLLER://:9093`). | 
+| `controller.listener.names` | Tells the broker which listener is dedicated to the KRaft quorum. |
+
+3. **The Cluster ID & Formatting**
+Unlike ZooKeeper, where Kafka just "shows up" and registers, KRaft requires an explicit cluster initialization step. You must generate a Cluster ID and format the storage directories before starting the brokers:
+- Generate ID: `kafka-storage.sh random-uuid`
+- Format Log: `kafka-storage.sh format -t <UUID> -c /path/to/server.properties`
+
+### Port Inventory
+
+#### Kafka Broker (apache/kafka)
+
+| Port (default) | Listener Name | Purpose | Connectors |
+| --- | --- | --- | --- |
+| 9092 | EXTERNAL | Client access from outside Docker | Producers / Consumers on host machine or external servers | 
+| 29092 | INTERNAL | Internal Docker network communication | Kafka Connect, Kafka UI, other Docker services |
+| 9093 | CONTROLLER | KRaft metadata quorum & controller communication | Kafka Broker itself (controller <-> broker) | 
