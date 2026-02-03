@@ -210,10 +210,10 @@ Unlike ZooKeeper, where Kafka just "shows up" and registers, KRaft requires an e
 
 1. **Kafka Connect (The Framework)**: 
 Kafka Connect is the runtime environment. It is a JVM (Java Virtual Machine) process that runs separately from your Kafka Brokers.
-- *Responsibility*: It handles the parts of data integration: reliability, scaling, fault tolerance, and offset management (remembering where it left off).
-- *Modes*: It can run in Standalone (one process) or Distributed (a cluster of workers) mode.
-- *The "Engine"*: It provides the REST API (usually on port `8083`) that allows you to manage and monitor data flows.
-- *Configuration*:
+    - *Responsibility*: It handles the parts of data integration: reliability, scaling, fault tolerance, and offset management (remembering where it left off).
+    - *Modes*: It can run in Standalone (one process) or Distributed (a cluster of workers) mode.
+    - *The "Engine"*: It provides the REST API (usually on port `8083`) that allows you to manage and monitor data flows.
+    - *Configuration*:
 
 | Parameter (Environment Variable) | Purpose & FunctionConnectivity | 
 | --- | --- | 
@@ -269,6 +269,7 @@ Kafka Connect is the runtime environment. It is a JVM (Java Virtual Machine) pro
 ```
 
 | Parameter | Purpose | 
+| --- | --- |
 | `topics` | The Kafka topic that the connector "listens" to. | 
 | `http.api.url` | The destination URL where the data will be sent. |
 | `request.method` | Usually POST for sending new data. | 
