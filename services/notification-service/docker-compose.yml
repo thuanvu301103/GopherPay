@@ -25,6 +25,9 @@ services:
   api:
     image: ghcr.io/novuhq/novu/api:latest
     restart: always
+    volumes:
+      - ./seed.sh:/tmp/seed.sh
+      - ./.seed.env:/tmp/.seed.env
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=${REDIS_PORT}
