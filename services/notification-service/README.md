@@ -207,7 +207,8 @@ Message is a single notification that is sent to a subscriber. Each channel step
         - `content`: The body of the email (HTML supported). Variables used here must match the data sent from your Go backend.
         - `layoutIdentifier`: Points to a specific email layout (header/footer). `"default"` uses Novu's standard system layout.
 2. Add a header's key `Novu-Environment-Id` using an Environment that belong to the User's Organization (This solve the Critical Bug - Issue of the UI)
-3. Create workflow: `POST /v1/workflows`
+3. Get Notification Group via `GET /v1/notification-groups`
+4. Create workflow: `POST /v1/workflows`
 ```JSON
 {
     "name": "Email Verification",
@@ -341,6 +342,7 @@ This workflow is usually peform by a third-party (Auth Service)
 
 ### System Delivery Diagnostics
 1. Get message detail of a transaction `GET /v1/messages?transactionId={transactionId}`
+2. Check details in tables `jobs`, `executiondetails` ...
 
 ## Seed data
 ```bash

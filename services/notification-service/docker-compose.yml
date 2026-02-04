@@ -27,6 +27,7 @@ services:
     restart: always
     volumes:
       - ./seed.sh:/tmp/seed.sh
+      - ./.seed.env:/tmp/.seed.env
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=${REDIS_PORT}
