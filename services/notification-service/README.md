@@ -341,3 +341,9 @@ This workflow is usually peform by a third-party (Auth Service)
 
 ### System Delivery Diagnostics
 1. Get message detail of a transaction `GET /v1/messages?transactionId={transactionId}`
+
+## Seed data
+```bash
+docker exec -u 0 -it $(docker ps -qf "name=api") apk add --no-cache curl jq
+docker exec -u 0 -it $(docker ps -qf "name=api") sh /tmp/seed.sh
+```
