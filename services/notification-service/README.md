@@ -340,9 +340,18 @@ This workflow is usually peform by a third-party (Auth Service)
     1. Provider Handshake: The Worker looks for an Active Integration (e.g., Gmail SMTP). It establishes a connection using the credentials you provided (Host, Port, App Password).
     2. SMTP Transmission: The Worker sends the rendered email to the SMTP server.Final Update: Once the SMTP server accepts the mail, the Worker updates the Message status to sent and completes the job.
 
+### Get APIKey of a user (for 3-rd party system)
+1. Add a header's key `Novu-Environment-Id` using an Environment that belong to the User's Organization
+2. Call API `GET /v1/environments/api-keys`
+3. Save `key`
+
 ### System Delivery Diagnostics
 1. Get message detail of a transaction `GET /v1/messages?transactionId={transactionId}`
 2. Check details in tables `jobs`, `executiondetails` ...
+
+## Authorization via Keys
+- `Bearer Token`: Get form login, used for user
+- `ApiKey Token`: Get from `GET /v1/environments/api-keys`, used for 3-rd party system
 
 ## Seed data
 ```bash
