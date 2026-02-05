@@ -278,6 +278,7 @@ Kafka Connect is the runtime environment. It is a JVM (Java Virtual Machine) pro
 ```
 
     - Core configuration:
+    
 | Parameter | Purpose | 
 | --- | --- |
 | `name` | The unique identifier for this connector instance |
@@ -286,6 +287,7 @@ Kafka Connect is the runtime environment. It is a JVM (Java Virtual Machine) pro
 | `tasks.max` | The maximum number of worker threads. For Sink connectors, this should generally not exceed the number of partitions in your topic | 
 
     - HTTP & Connection Settings:
+
 | Parameter | Purpose | 
 | --- | --- |
 | `http.api.url` | The destination URL where the data will be sent. |
@@ -294,6 +296,7 @@ Kafka Connect is the runtime environment. It is a JVM (Java Virtual Machine) pro
 | `concurrency.limit` | The maximum number of concurrent HTTP requests each task can handle. Setting this to `5` allows the connector to process data faster without waiting for each individual response before starting the next |
 
     - Data Transformation & Formatting
+
 | Parameter | Purpose | 
 | --- | --- |
 | `value.converter` | Converts the raw bytes from Kafka into a structured format. `JsonConverter` is used to output JSON | 
@@ -303,6 +306,7 @@ Kafka Connect is the runtime environment. It is a JVM (Java Virtual Machine) pro
 | `batch.json.as.array` | Set to false to send a single JSON object `{...}` instead of a list `[{...}]` |
 
     - Error Handling & Reporting (The "Reporter")
+
 | Parameter | Purpose | 
 | --- | --- |
 | `errors.tolerance` | Set to `all` so that the connector doesn't stop if it hits a "poison pill" (bad record). Instead, it moves to the next message |
@@ -311,6 +315,7 @@ Kafka Connect is the runtime environment. It is a JVM (Java Virtual Machine) pro
 | `errors.log.enable` | Prints error details directly into the Kafka Connect worker logs for immediate visibility |
 
     - Infrastructure
+
 | Parameter | Purpose | 
 | --- | --- |
 | `confluent.topic.bootstrap.servers` | The Kafka broker address used for internal metadata and reporting topics |
@@ -323,6 +328,7 @@ A Kafka Connector is the specific implementation or "driver" designed to talk to
 - *Responsibility*: The connector only cares about how to talk to the specific database or API it was built for.
 
 6. Important topic
+
 | Topic | Purpose | 
 | --- | --- |
 | `_confluent-command` | Special *internal system* topic used by the Confluent Platform to manage the lifecycle and state of various component. This topic should be created before creating any connectors using `HttpSinkConnector` |
