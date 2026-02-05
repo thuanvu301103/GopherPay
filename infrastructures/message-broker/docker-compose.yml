@@ -120,6 +120,24 @@ services:
     networks:
       - gopher_net
 
+  kafka-seeder:
+    image: alpine:latest
+    container_name: kafka_seeder
+    volumes:
+      - ./seed.sh:/tmp/seed.sh
+      - ./.seed.env:/tmp/.seed.env
+    working_dir: /tmp
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache bash curl jq
+        sleep infinity 
+    networks:
+      - gopher_net
+
 
 volumes:
   kafka_data:

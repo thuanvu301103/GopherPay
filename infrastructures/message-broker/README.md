@@ -350,3 +350,8 @@ A Kafka Connector is the specific implementation or "driver" designed to talk to
 | Port (default) | Purpose | Connectors |
 | --- | --- | --- |
 | 8083 | REST API for managing connectors | Kafka UI, curl, REST clients |
+
+## Seed data
+```bash
+docker exec -u 0 -it $(docker ps -qf "name=kafka_seeder") sh /tmp/seed.sh
+```
