@@ -48,3 +48,52 @@ openssl rand -base64 32
 ```Bash
 openssl rand -hex 16
 ```
+
+## Connecting Separate Docker Compose Projects
+
+### Create the Shared Network
+
+1. Create a global network that exists outside of any specific `docker-compose.yml` file. Open terminal (PowerShell) and run:
+
+```Bash
+docker network create gopher_network
+```
+
+2. Verify it exists by running 
+
+```Bash
+docker network ls
+```
+
+### Update the Docker Compose Files
+
+Tell each service to join this external network. Add the networks configuration to the `kafka_connect` (and all other services) service and define the network at the bottom.
+```YAML
+services:
+  kafka_connect:
+    # ... existing config ...
+    networks:
+      - gopher_net
+
+networks:
+  gopher_net:
+    external: true
+    name: gopher_network
+```
+
+### Restart Services
+
+Navigate to each directory and restart the containers to apply the network changes:
+```Bash
+docker compose up -d
+```
+
+### Verification
+
+1. Check if both containers have successfully joined the "bridge":
+
+```Bash
+docker network inspect gopher_network
+```
+
+2. Look for the Containers section. You should see all services listed there with their internal IPs.
