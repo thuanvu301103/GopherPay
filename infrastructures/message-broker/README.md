@@ -244,44 +244,90 @@ Kafka Connect is the runtime environment. It is a JVM (Java Virtual Machine) pro
 | Pause/Resume | `PUT/connectors/{name}/pause` | Temporarily stop data flow. | 
 | Delete | `DELETE/connectors/{name}` | Completely remove a connector. |
 
-4. **Example configuration for the popular Confluent HTTP Sink Connector**: The Configuration (JSON)You would send this JSON to the `PUT /connectors/http-sink-test/config` endpoint
+4. **Example configuration for the popular Confluent HTTP Sink Connector**: The Configuration (JSON)You would send this JSON to the `POST /connectors` endpoint
 
 ```JSON
 {
   "name": "http-sink-test",
   "config": {
     "connector.class": "io.confluent.connect.http.HttpSinkConnector",
+    "http.api.url": "http://notification-service-api-1:3000/v1/events/trigger",
+    "headers": "Content-Type:application/json|Authorization:ApiKey 3eedcd3be2c04f075729bedd949c549c",
+    "topics": "email_verification",
     "tasks.max": "1",
-    "topics": "orders-topic",
-    "http.api.url": "https://api.your-service.com/v1/ingest",
+    "batch.max.size": "1",
+    "batch.json.as.array": "false",
+    "concurrency.limit": "5",
     "request.method": "POST",
-    "headers": "Content-Type:application/json|Authorization:Bearer your_token",
-    "confluent.topic.bootstrap.servers": "kafka:29092",
-    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "request.body.format": "json",
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
     "value.converter.schemas.enable": "false",
-    "concurrency.limit": "5",
-    "batch.max.size": "10",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "confluent.topic.bootstrap.servers": "kafka:29092",
+    "reporter.bootstrap.servers": "kafka:29092",
+    "reporter.error.topic.name": "http-error-topic",
     "reporter.result.topic.name": "http-success-topic",
-    "reporter.error.topic.name": "http-error-topic"
+    "reporter.error.topic.replication.factor": "1",
+    "reporter.result.topic.replication.factor": "1",
+    "errors.tolerance": "all",
+    "errors.log.enable": "true",
+    "errors.log.include.messages": "true",
+    "confluent.license": ""
   }
 }
 ```
 
+    - Core configuration:
 | Parameter | Purpose | 
 | --- | --- |
-| `topics` | The Kafka topic that the connector "listens" to. | 
+| `name` | The unique identifier for this connector instance |
+| `connector.class` | Defines the *engine* used. `HttpSinkConnector` tells Kafka to send data from a topic to an external HTTP endpoint. |
+| `topics` | The Kafka topic that the connector "listens" to | 
+| `tasks.max` | The maximum number of worker threads. For Sink connectors, this should generally not exceed the number of partitions in your topic | 
+
+    - HTTP & Connection Settings:
+| Parameter | Purpose | 
+| --- | --- |
 | `http.api.url` | The destination URL where the data will be sent. |
 | `request.method` | Usually POST for sending new data. | 
 | `headers` | Used for authentication or content-type settings. | 
-| `batch.max.size` | How many Kafka records to bundle into a single HTTP request (better for performance). |
-| `reporter...topic` | Tracks which requests succeeded or failed—excellent for debugging. |
+| `concurrency.limit` | The maximum number of concurrent HTTP requests each task can handle. Setting this to `5` allows the connector to process data faster without waiting for each individual response before starting the next |
 
-2. **Kafka Connectors (The Plugins)**:
+    - Data Transformation & Formatting
+| Parameter | Purpose | 
+| --- | --- |
+| `value.converter` | Converts the raw bytes from Kafka into a structured format. `JsonConverter` is used to output JSON | 
+| `value.converter.schemas.enable` | Set to `false` to prevent Kafka from wrapping your data in a complex "schema" and "payload" structure, keeping the JSON clean |
+| `request.body.format` | Explicitly tells the connector to format the outgoing HTTP request body as a JSON string |
+| `batch.max.size` | The number of Kafka records to bundle into one HTTP request. You set this to 1 for real-time, record-by-record processing |
+| `batch.json.as.array` | Set to false to send a single JSON object `{...}` instead of a list `[{...}]` |
+
+    - Error Handling & Reporting (The "Reporter")
+| Parameter | Purpose | 
+| --- | --- |
+| `errors.tolerance` | Set to `all` so that the connector doesn't stop if it hits a "poison pill" (bad record). Instead, it moves to the next message |
+| `reporter.result.topic.name` | A "Success Topic" that logs details of every successful HTTP request (status 200) |
+| `reporter.error.topic.name` | A "Dead Letter Queue" topic. If the API returns an error (like the 400 or 422 you saw), the full error report is sent here for debugging |
+| `errors.log.enable` | Prints error details directly into the Kafka Connect worker logs for immediate visibility |
+
+    - Infrastructure
+| Parameter | Purpose | 
+| --- | --- |
+| `confluent.topic.bootstrap.servers` | The Kafka broker address used for internal metadata and reporting topics |
+| `confluent.license` | Used for Confluent enterprise features. Leaving it empty usually defaults to a trial mode for this specific connector |
+
+5. **Kafka Connectors (The Plugins)**:
 A Kafka Connector is the specific implementation or "driver" designed to talk to a specific external system. These are typically JAR files that you download and place in the plugin.path of your Kafka Connect worker.
 - *Source Connectors*: Ingest data from an external system (e.g., Salesforce, MongoDB, MQTT) into Kafka.
 - *Sink Connectors*: Export data from Kafka to an external system (e.g., Snowflake, Amazon S3, Elasticsearch).
 - *Responsibility*: The connector only cares about how to talk to the specific database or API it was built for.
+
+6. Important topic
+| Topic | Purpose | 
+| --- | --- |
+| `_confluent-command` | Special *internal system* topic used by the Confluent Platform to manage the lifecycle and state of various component. This topic should be created before creating any connectors using `HttpSinkConnector` |
+| `http-error-topic` | A "Dead Letter Queue" topic. If the API returns an error (like the 400 or 422 you saw), the full error report is sent here for debugging. Should be specify while creating connectors |
+| `http-success-topic` | A "Success Topic" that logs details of every successful HTTP request (status 200). Should be specify while creating connectors |
 
 ### Port Inventory
 
