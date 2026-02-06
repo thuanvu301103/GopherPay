@@ -1,0 +1,15 @@
+services:
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    networks:
+      - gopher_net
+
+networks:
+  gopher_net:
+    external: true
+    name: gopher_network
