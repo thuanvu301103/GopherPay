@@ -29,6 +29,8 @@ services:
       - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
       - KAFKA_MIN_INSYNC_REPLICAS=1
 
+      - KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR=1
+
     volumes:
       - kafka_data:/var/lib/kafka/data
 
@@ -39,6 +41,9 @@ services:
       timeout: 10s
       retries: 10
       start_period: 30s
+
+    networks:
+      - gopher_net
 
 
   kafka-connect:
@@ -73,6 +78,11 @@ services:
       CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
 
+      CONFLUENT_TOPIC_REPLICATION_FACTOR: 1
+      CONNECT_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      CONNECT_REPLICATION_FACTOR: 1
+
       # ===== Converters =====
       CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
       CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
@@ -87,6 +97,9 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
+    networks:
+      - gopher_net
 
   kafka-ui:
     image: provectuslabs/kafka-ui:v0.7.2
@@ -104,7 +117,33 @@ services:
       kafka-connect:
         condition: service_healthy
 
+    networks:
+      - gopher_net
+
+  kafka-seeder:
+    image: alpine:latest
+    container_name: kafka_seeder
+    volumes:
+      - ./seed.sh:/tmp/seed.sh
+      - ./.seed.env:/tmp/.seed.env
+    working_dir: /tmp
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache bash curl jq
+        sleep infinity 
+    networks:
+      - gopher_net
+
 
 volumes:
   kafka_data:
     driver: local
+
+networks:
+  gopher_net:
+    external: true
+    name: gopher_network

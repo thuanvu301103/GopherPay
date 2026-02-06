@@ -207,7 +207,8 @@ Message is a single notification that is sent to a subscriber. Each channel step
         - `content`: The body of the email (HTML supported). Variables used here must match the data sent from your Go backend.
         - `layoutIdentifier`: Points to a specific email layout (header/footer). `"default"` uses Novu's standard system layout.
 2. Add a header's key `Novu-Environment-Id` using an Environment that belong to the User's Organization (This solve the Critical Bug - Issue of the UI)
-3. Create workflow: `POST /v1/workflows`
+3. Get Notification Group via `GET /v1/notification-groups`
+4. Create workflow: `POST /v1/workflows`
 ```JSON
 {
     "name": "Email Verification",
@@ -339,5 +340,21 @@ This workflow is usually peform by a third-party (Auth Service)
     1. Provider Handshake: The Worker looks for an Active Integration (e.g., Gmail SMTP). It establishes a connection using the credentials you provided (Host, Port, App Password).
     2. SMTP Transmission: The Worker sends the rendered email to the SMTP server.Final Update: Once the SMTP server accepts the mail, the Worker updates the Message status to sent and completes the job.
 
+### Get APIKey of a user (for 3-rd party system)
+1. Add a header's key `Novu-Environment-Id` using an Environment that belong to the User's Organization
+2. Call API `GET /v1/environments/api-keys`
+3. Save `key`
+
 ### System Delivery Diagnostics
 1. Get message detail of a transaction `GET /v1/messages?transactionId={transactionId}`
+2. Check details in tables `jobs`, `executiondetails` ...
+
+## Authorization via Keys
+- `Bearer Token`: Get form login, used for user
+- `ApiKey Token`: Get from `GET /v1/environments/api-keys`, used for 3-rd party system
+
+## Seed data
+```bash
+docker exec -u 0 -it $(docker ps -qf "name=api") apk add --no-cache curl jq
+docker exec -u 0 -it $(docker ps -qf "name=api") sh /tmp/seed.sh
+```

@@ -13,6 +13,9 @@ services:
     ports:
       - "${MONGO_PORT}:27017"
 
+    networks:
+      - gopher_net
+
   # Message queue for handling asynchronous notification jobs
   redis:
     image: redis:7
@@ -21,10 +24,16 @@ services:
     ports:
       - "${REDIS_PORT}:6379"
 
+    networks:
+      - gopher_net
+
   # Backend API: The core logic of Novu
   api:
     image: ghcr.io/novuhq/novu/api:latest
     restart: always
+    volumes:
+      - ./seed.sh:/tmp/seed.sh
+      - ./.seed.env:/tmp/.seed.env
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=${REDIS_PORT}
@@ -36,6 +45,8 @@ services:
     depends_on:
       - mongodb
       - redis
+    networks:
+      - gopher_net
 
   # Worker: The engine that actually sends the emails/SMS
   worker:
@@ -53,6 +64,9 @@ services:
       - mongodb
       - redis
 
+    networks:
+      - gopher_net
+
   # Dashboard: The UI to design your email templates
   web:
     image: ghcr.io/novuhq/novu/web:latest
@@ -66,5 +80,13 @@ services:
     depends_on:
       - api
 
+    networks:
+      - gopher_net
+
 volumes:
   mongodb_data:
+
+networks:
+  gopher_net:
+    external: true
+    name: gopher_network
