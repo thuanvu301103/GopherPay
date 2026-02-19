@@ -102,8 +102,8 @@ docker network inspect gopher_network
 
 1. Start Infra: Message Broker (Apache Kafka)
 2. Setup Service: Notification Service
-  1. Start service
-  2. Run seed data script `seed.sh`
-  3. Retrieve `API-key` from seed script console or from API
+   1. Start service
+   2. Run seed data script `seed.sh`
+   3. Retrieve `API-key` from seed script console or from API
 3. Run seed data script for Infra: Message Broke (Apache Kafaka) `seed.sh`
 4. Start Service: Auth Service
