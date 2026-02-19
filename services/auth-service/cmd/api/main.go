@@ -26,7 +26,7 @@ import (
 
 // @schemes         http https
 
-// @host      localhost:3004
+// @host      localhost:3000
 // @BasePath  /api/v1/
 
 func main() {

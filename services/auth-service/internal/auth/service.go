@@ -77,10 +77,16 @@ func (s *service) Register(ctx context.Context, req RegisterRequest) (*RegisterR
 		return nil, err
 	}
 
-	payload := map[string]string{
-		"email":  user.Email,
-		"userId": user.ID.String(),
-		"token":  rawToken,
+	payload := map[string]any{
+		"name": "email-verification",
+		"to": map[string]any{
+			"subscriberId": user.ID.String(),
+			"email":        user.Email,
+			"firstName":    user.FullName,
+		},
+		"payload": map[string]any{
+			"verificationLink": rawToken,
+		},
 	}
 	byteData, err := json.Marshal(payload)
 	if err != nil {

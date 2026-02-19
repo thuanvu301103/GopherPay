@@ -15,12 +15,12 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:3004",
+    "host": "localhost:3000",
     "basePath": "/api/v1/",
     "paths": {
         "/auth/register": {
             "post": {
-                "description": "Register a new user with email and password",
+                "description": "Register a new user with email and password. The system also send a verification email to user",
                 "consumes": [
                     "application/json"
                 ],

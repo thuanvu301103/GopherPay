@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/segmentio/kafka-go"
@@ -28,7 +29,7 @@ func parseRequiredAcks(s string) kafka.RequiredAcks {
 func NewProducer(cfg config.Config) *Producer {
 	return &Producer{
 		Writer: &kafka.Writer{
-			Addr:     kafka.TCP(cfg.KafkaBrokers...),
+			Addr:     kafka.TCP(cfg.KafkaBrokers),
 			Balancer: &kafka.LeastBytes{},
 			// Other configuration
 			RequiredAcks: kafka.RequiredAcks(parseRequiredAcks(cfg.KafkaRequiredAcks)),
@@ -47,6 +48,7 @@ func (p *Producer) Publish(ctx context.Context, topic string, key, value []byte)
 		Value: value,
 	})
 	if err != nil {
+		slog.Error("Failed to publish message to Kafka", "error", err)
 		return err
 	}
 	return nil
